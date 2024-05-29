@@ -1,8 +1,13 @@
 import React,{ useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Route, BrowserRouter as Router, Routes, Switch } from 'react-router-dom';
 import logo from './logo.svg';
 import './App.css';
 import BottomBar from "./components/BottomBar"
+import Login from './components/Login';
+import Register from './components/Register';
+import Start from './components/Start';
+import Balance from "./components/Balance"
+import Button from './components/Button';
 import { createSmartAccountClient } from "@alchemy/aa-core";
 import { createLightAccount } from "@alchemy/aa-accounts";
 import { http } from "viem";
@@ -65,12 +70,24 @@ function App() {
   //       });
   //   }
   // }, [smartAccountClient]);
+
+
+
+  // const handleClick = () => {
+  //   alert("Clicked!");
+  // }
   
   return (
     <div className="App">
       <Router>
-        <BottomBar />
-        
+        <div>
+          <Routes>
+            <Route path='/login' exact element={<Login />} />
+            <Route path='/register' element={<Register />} />
+            <Route path='/home' element={<BottomBar />} />
+            <Route path='/' element={<Start/>} />
+          </Routes>
+        </div>
       </Router>
     </div>
   );
