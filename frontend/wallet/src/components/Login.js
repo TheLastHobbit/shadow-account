@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from './Button';
+import '../css/Login.css'
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -13,8 +14,8 @@ function Login() {
     };
 
     return (
-        <div>
-            <h2>Login</h2>
+        <div className='container'>
+            <h2 className='head'>Login</h2>
             <form>
                 <div>
                     <label>Email:</label>
