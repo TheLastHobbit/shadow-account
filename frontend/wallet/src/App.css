@@ -1,7 +1,12 @@
 .App {
   text-align: center;
 }
-
+body{
+  background-image: url("background.png");
+  background-size: cover;
+  margin:245px;
+  padding:37px;
+}
 .bottom-bar{
   position: fixed;
   bottom: 0;
@@ -23,6 +28,11 @@
   width: 32px; 
   height: 32px; 
   vertical-align: middle; /* 确保图片在链接中垂直居中 */ 
+}
+.welcome{
+  font-size: 30px;
+  color:rgb(178, 204, 232);
+
 }
 
 

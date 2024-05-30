@@ -16,14 +16,14 @@ function Start() {
 
     return(
         <div>
+            <p className='welcome'>Welcome Back</p>
             <Button onClick={handleSignIn} className='sign-in'>
                 Sign In
             </Button>
             <Button onClick={handleSignUp} className='sign-up'>
                 Sign Up
             </Button>
-
-            <BottomBar></BottomBar>
+        <BottomBar></BottomBar>
         </div>
 
     )
