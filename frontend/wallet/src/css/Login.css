@@ -1,0 +1,12 @@
+.container{
+    background-color:rgb(129, 174, 238);
+    width:60%;
+    height: 80%;
+    border:1px solid grey;
+    position: absolute;
+    left:20%;top:10%;
+}
+
+.container .head{
+    color: brown;
+}
