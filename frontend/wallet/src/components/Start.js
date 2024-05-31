@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Button from './Button';
 import BottomBar from './BottomBar';
 import Login from './Login';
+import Balance from './Balance';
 
 function Start() {
     const navigate = useNavigate();
@@ -15,15 +16,14 @@ function Start() {
     };
 
     return(
-        <div>
-            <p className='welcome'>Welcome Back</p>
+        <div className='start'>
+            <h1 className='welcome'>Welcome Back</h1>
             <Button onClick={handleSignIn} className='sign-in'>
                 Sign In
             </Button>
             <Button onClick={handleSignUp} className='sign-up'>
                 Sign Up
             </Button>
-        <BottomBar></BottomBar>
         </div>
 
     )

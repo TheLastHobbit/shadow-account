@@ -1,12 +1,17 @@
 .container{
-    background-color:rgb(129, 174, 238);
+    background-color:rgba(255, 255, 255,0.5);
     width:60%;
     height: 80%;
-    border:1px solid grey;
+    border:1px solid rgb(0, 0, 0);
     position: absolute;
     left:20%;top:10%;
-}
+    border-radius: 20px;
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);/*外层阴影*/
 
-.container .head{
-    color: brown;
+}
+.container .container-inner{
+    position: absolute;
+    top: 20%;
+    left: 34%
 }

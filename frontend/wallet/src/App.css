@@ -1,12 +1,14 @@
 .App {
   text-align: center;
-}
-body{
-  background-image: url("background.png");
+  background-image: url("background.jpeg");
   background-size: cover;
-  margin:245px;
-  padding:37px;
+  background-repeat: no-repeat;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+  overflow: hidden;
 }
+
 .bottom-bar{
   position: fixed;
   bottom: 0;
@@ -29,9 +31,23 @@ body{
   height: 32px; 
   vertical-align: middle; /* 确保图片在链接中垂直居中 */ 
 }
-.welcome{
+.start{
+  width: 50%;
+  height: 50%;
+  position:absolute;
+  top: 20%;
+  left: 25%;
+  border-radius: 20px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  justify-content: space-between; /* 增加上下间距 */
+}
+.start .welcome{
   font-size: 30px;
-  color:rgb(178, 204, 232);
+  color:rgb(255, 255, 255);
 
 }
 

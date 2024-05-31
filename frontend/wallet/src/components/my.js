@@ -4,12 +4,11 @@ import Button from './Button';
 import BottomBar from './BottomBar';
 import Balance from './Balance';
 
-function my(){
-    const navigate = useNavigate();
+function My(){
 
     return(
         <div>
-            <Balance></Balance>
+            <Balance className="balance"></Balance>
             <BottomBar></BottomBar>
 
         </div>
