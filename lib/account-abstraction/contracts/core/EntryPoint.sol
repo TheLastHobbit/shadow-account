@@ -15,6 +15,8 @@ import "./Helpers.sol";
 import "./NonceManager.sol";
 import "./UserOperationLib.sol";
 
+import {Test, console} from "forge-std/Test.sol";
+
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
@@ -99,15 +101,18 @@ contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard,
                 }
             }
             if (methodSig == IAccountExecute.executeUserOp.selector) {
+                console.log("3333333");
                 bytes memory executeUserOp = abi.encodeCall(IAccountExecute.executeUserOp, (userOp, opInfo.userOpHash));
                 innerCall = abi.encodeCall(this.innerHandleOp, (executeUserOp, opInfo, context));
             } else
             {
+                console.log("4444444");
                 innerCall = abi.encodeCall(this.innerHandleOp, (callData, opInfo, context));
+                console.logBytes(innerCall);
             }
             assembly ("memory-safe") {
                 success := call(gas(), address(), 0, add(innerCall, 0x20), mload(innerCall), 0, 32)
-                collected := mload(0)
+                collected := mload(0)       
                 mstore(0x40, saveFreePtr)
             }
         }
@@ -177,6 +182,7 @@ contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard,
     ) public nonReentrant {
         uint256 opslen = ops.length;
         UserOpInfo[] memory opInfos = new UserOpInfo[](opslen);
+        console.log("handleOps opslen", opslen);
 
         unchecked {
             for (uint256 i = 0; i < opslen; i++) {
@@ -336,12 +342,19 @@ contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard,
             }
         }
 
+        // console.log("callData:", bytes(callData));
+
         IPaymaster.PostOpMode mode = IPaymaster.PostOpMode.opSucceeded;
         if (callData.length > 0) {
+            console.log("555555",mUserOp.sender);
             bool success = Exec.call(mUserOp.sender, 0, callData, callGasLimit);
+            console.log("success:",success);
             if (!success) {
+                console.log("666666");
                 bytes memory result = Exec.getReturnData(REVERT_REASON_MAX_LEN);
+
                 if (result.length > 0) {
+                    console.log("7777777");
                     emit UserOperationRevertReason(
                         opInfo.userOpHash,
                         mUserOp.sender,
@@ -375,12 +388,14 @@ contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard,
     function _copyUserOpToMemory(
         PackedUserOperation calldata userOp,
         MemoryUserOp memory mUserOp
-    ) internal pure {
+    ) internal view {
         mUserOp.sender = userOp.sender;
         mUserOp.nonce = userOp.nonce;
         (mUserOp.verificationGasLimit, mUserOp.callGasLimit) = UserOperationLib.unpackUints(userOp.accountGasLimits);
+        console.log("_copyUserOpToMemory_verificationGasLimit:",mUserOp.verificationGasLimit);
         mUserOp.preVerificationGas = userOp.preVerificationGas;
         (mUserOp.maxPriorityFeePerGas, mUserOp.maxFeePerGas) = UserOperationLib.unpackUints(userOp.gasFees);
+        console.log("_copyUserOpToMemory_maxPriorityFeePerGas:",mUserOp.maxPriorityFeePerGas);
         bytes calldata paymasterAndData = userOp.paymasterAndData;
         if (paymasterAndData.length > 0) {
             require(
@@ -486,9 +501,10 @@ contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard,
                     ? 0
                     : requiredPrefund - bal;
             }
+            console.log("verificationGasLimit:",verificationGasLimit);
             try
                 IAccount(sender).validateUserOp{
-                    gas: verificationGasLimit
+                    gas:verificationGasLimit
                 }(op, opInfo.userOpHash, missingAccountFunds)
             returns (uint256 _validationData) {
                 validationData = _validationData;
@@ -496,6 +512,7 @@ contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard,
                 revert FailedOpWithRevert(opIndex, "AA23 reverted", Exec.getReturnData(REVERT_REASON_MAX_LEN));
             }
             if (paymaster == address(0)) {
+                console.log("111111");
                 DepositInfo storage senderInfo = deposits[sender];
                 uint256 deposit = senderInfo.deposit;
                 if (requiredPrefund > deposit) {
@@ -565,9 +582,11 @@ contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard,
         uint256 paymasterValidationData,
         address expectedAggregator
     ) internal view {
+        console.log("validationData:",validationData);
         (address aggregator, bool outOfTimeRange) = _getValidationData(
             validationData
         );
+        console.log("aggregator:",aggregator);
         if (expectedAggregator != aggregator) {
             revert FailedOp(opIndex, "AA24 signature error");
         }

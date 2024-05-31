@@ -13,8 +13,8 @@ function Start() {
     };
 
     return(
-        <div>
-            <p className='welcome'>Welcome Back</p>
+        <div className='start'>
+            <h1 className='welcome'>Welcome Back</h1>
             <Button onClick={handleSignIn} className='sign-in'>
                 Sign In
             </Button>

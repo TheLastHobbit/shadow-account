@@ -14,6 +14,7 @@ function Register() {
 
   return (
     <div className='container'>
+      <div className='container-inner'>
       <h2>Register</h2>
       <form>
         <div>
@@ -29,6 +30,7 @@ function Register() {
         </Button>
       </form>
       <p>Already have an account? <Link to="/login">Login</Link></p>
+      </div>
     </div>
   );
 }

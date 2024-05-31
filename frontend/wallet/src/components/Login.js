@@ -22,8 +22,9 @@ function Login() {
 
     return (
         <div className='container'>
-            <h2 className='head'>Login</h2>
-            <form>
+            <div className='container-inner'>
+            <h2>Login</h2>
+            <form >
                 <div>
                     <label>Email:</label>
                     <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -37,6 +38,7 @@ function Login() {
                 </Button>
             </form>
             <p>Don't have an account? <Link to="/register">Register</Link></p>
+            </div> 
         </div>
     );
 }
