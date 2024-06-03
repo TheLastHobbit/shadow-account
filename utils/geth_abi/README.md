@@ -1,0 +1,1 @@
+1. 先安装 geth `go get -u github.com/ethereum/go-ethereum`
