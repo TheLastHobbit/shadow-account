@@ -6,6 +6,7 @@ import BottomBar from "./components/BottomBar"
 import Login from './components/Login';
 import Register from './components/Register';
 import Start from './components/Start';
+import Warning from './components/Warning';
 import Balance from "./components/Balance"
 import Button from './components/Button';
 import { createSmartAccountClient } from "@alchemy/aa-core";
@@ -86,6 +87,7 @@ function App() {
             <Route path='/register' element={<Register />} />
             <Route path='/home' element={<BottomBar />} />
             <Route path='/' element={<Start/>} />
+            <Route path='/warning' element={<Warning/>} />
           </Routes>
         </div>
       </Router>

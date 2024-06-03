@@ -13,5 +13,14 @@
 .container .container-inner{
     position: absolute;
     top: 20%;
-    left: 34%
+    left: 34%;
+}
+.container.container-inner.email{
+    height: 40px;
+    width: 300px;
+}
+.container.container-inner.password{
+    height: 40px;
+    width: 300px;
+
 }

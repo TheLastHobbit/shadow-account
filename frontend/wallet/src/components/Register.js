@@ -17,11 +17,11 @@ function Register() {
       <div className='container-inner'>
       <h2>Register</h2>
       <form>
-        <div>
+        <div className="email">
           <label>Email:</label>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
-        <div>
+        <div className="password">
           <label>Password:</label>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>

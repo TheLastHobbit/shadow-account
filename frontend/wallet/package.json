@@ -40,6 +40,6 @@
     ]
   },
   "devDependencies": {
-    "typescript": "~4.9.0"
+    "typescript": "^5.4.5"
   }
 }
