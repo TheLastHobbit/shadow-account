@@ -1,0 +1,24 @@
+.home-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;    /* 垂直居中 */
+    height: 600px;
+    font-size: 1rem;
+    flex-direction: column; /* 设置为列方向，使子元素上下排列 */
+    /* font-weight: bold;
+    color: #fff; */
+}
+
+.home-container .balance{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 50px;
+}
+
+.home-container .add-email{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 100px;
+}

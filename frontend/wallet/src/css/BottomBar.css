@@ -1,0 +1,29 @@
+.bottom-bar {
+    position: fixed;
+    bottom: 0;
+    width: 60%;
+    background-color: rgba(204, 204, 204, 0.2);
+    border-top: 1px solid #ccc;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+  }
+  
+  .link {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+  }
+  
+  .icon {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .btn-image {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle; /* 垂直居中 */
+    line-height: normal; /* 防止图片继承容器的行高 */
+  }
+  
