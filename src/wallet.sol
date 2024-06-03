@@ -70,14 +70,12 @@ contract Wallet is
         bytes32 userOpHash
     ) internal virtual override returns (uint256 validationData) {
         bytes32 hash = MessageHashUtils.toEthSignedMessageHash(userOpHash);
-        console.log("userOpHash", uint(userOpHash));
 
         address recoveredAddress = ECDSA.recover(hash, userOp.signature);
         console.log("Recovered address:", recoveredAddress);
         console.log("Owner address:", owner());
         if (owner() != recoveredAddress) return 1;
         return 0;
-        // return owner() == recovered ? 0 : 1;
     }
 
     function initialize(
@@ -100,7 +98,6 @@ contract Wallet is
         uint256 value,
         bytes memory data
     ) public payable virtual {
-        console.log("888888");
         console.log("target", target);
         console.log("value", value);
         console.logBytes(data);
@@ -166,6 +163,10 @@ contract Wallet is
 
     function getDeposit() public view returns (uint256) {
         return entryPoint().balanceOf(address(this));
+    }
+
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
     }
 
     function addDeposit() public payable {
