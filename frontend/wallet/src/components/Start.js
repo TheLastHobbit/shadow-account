@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from './Button';
-import BottomBar from './BottomBar';
-import Login from './Login';
-import Balance from './Balance';
 
 function Start() {
     const navigate = useNavigate();

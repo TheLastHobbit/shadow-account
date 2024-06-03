@@ -6,6 +6,8 @@ import BottomBar from "./components/BottomBar"
 import Login from './components/Login';
 import Register from './components/Register';
 import Start from './components/Start';
+import Home from './components/Home';
+import Warn from './components/Warn';
 import Balance from "./components/Balance"
 import Button from './components/Button';
 import {
@@ -29,7 +31,8 @@ function App() {
           <Routes>
             <Route path='/login' exact element={<Login />} />
             <Route path='/register' element={<Register />} />
-            <Route path='/home' element={<BottomBar />} />
+            <Route path='/home' element={<Home />} />
+            <Route path='/warning' element={<Warn />} />
             <Route path='/' element={<Start/>} />
           </Routes>
         </div>
