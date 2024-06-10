@@ -32,6 +32,16 @@ contract SocialRecovery {
         uint l;
     }
 
+    // function stringToUint(string memory s) public pure returns (uint256) {
+    //     bytes memory b = bytes(s);
+    //     uint256 number;
+    //     for(uint i = 0; i < b.length; i++) {
+    //         require(b[i] >= 0x30 && b[i] <= 0x39, "Invalid character");
+    //         number = number * 10 + (uint256(uint8(b[i])) - 0x30);
+    //     }
+    //     return number;
+    // }
+
     function verify(
         string memory toSign,
         string memory body,
@@ -43,16 +53,17 @@ contract SocialRecovery {
         public
         view
         returns (
-            bool success,
-            string memory from
+            bool,
+            uint256 
         )
     {
         SigTags memory sigTags;
         Headers memory headers;
+        bool success;
 
         headers = parse(toSign.toSlice());
 
-        from = parseFrom(headers.from);
+        uint256 from = stringToUint(parseFrom(headers.from));
         strings.slice memory dkimSig = headers.dkim;
 
         (sigTags, success) = parseSigTags(dkimSig.copy());
@@ -69,7 +80,7 @@ contract SocialRecovery {
             return (false, from);
         }
 
-        return (success, from);
+        return (success, uint256(from));
     }
 
     function verifyBody(

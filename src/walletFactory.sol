@@ -5,6 +5,7 @@ import "account-abstraction/interfaces/IEntryPoint.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {Wallet} from "./Wallet.sol";
+import {PedersenCommitment} from "./ZKtool.sol";
 
 contract WalletFactory {
     Wallet public immutable walletImplementation;
@@ -18,7 +19,7 @@ contract WalletFactory {
     function getAddress(
         address owner,
         uint256 salt,
-        uint256 emailHash
+        PedersenCommitment.Commitment memory emailHash
     ) public view returns (address) {
         return
             Create2.computeAddress(
@@ -41,7 +42,7 @@ contract WalletFactory {
     function createAccount(
         address owner,
         uint256 salt,
-        uint256 emailHash
+        PedersenCommitment.Commitment memory emailHash
     ) external returns (Wallet) {
         // Get the counterfactual address
         address addr = getAddress(owner, salt, emailHash);
