@@ -26,7 +26,6 @@ contract PedersenCommitment {
         return commitments;
     }
 
-
     function verify(uint256[] memory values, Commitment[] memory commitments) public pure returns (bool) {
         uint256 combinedValue;
         for (uint256 i = 0; i < values.length; i++) {
