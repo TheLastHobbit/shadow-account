@@ -10,6 +10,7 @@ import {PublicKeyOracle} from "../src/DKIM/contracts/PublicKeyOracle.sol";
 import {MyToken} from "./util/MyToken.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {PackedUserOperation} from "lib/account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import {PedersenCommitment} from "../src/ZKtool.sol";
 
 contract walletTest is Test {
     Wallet public wallet;
@@ -18,6 +19,7 @@ contract walletTest is Test {
     SocialRecovery public socialRecovery;
     PublicKeyOracle public publicKeyOracle;
     MyToken public myToken;
+    PedersenCommitment public pedersenCommitment;
 
     address bob = makeAddr("bob");
     address admin = makeAddr("admin");
@@ -32,17 +34,21 @@ contract walletTest is Test {
         vm.startPrank(admin);
         {
             publicKeyOracle = new PublicKeyOracle();
+            pedersenCommitment = new PedersenCommitment();
             socialRecovery = new SocialRecovery(address(publicKeyOracle));
             entryPoint = new MyEntryPoint();
             walletFactory = new WalletFactory(
                 entryPoint,
                 address(socialRecovery)
             );
+            uint256[] memory values = new uint256[](1);
+            values[0] = getSalt("2865755738@qq.com");
+            PedersenCommitment.Commitment[] memory commitments = pedersenCommitment.generateCommitments(values);
             address walletAddr = address(
                 walletFactory.createAccount(
                     alice,
                     getSalt("alice"),
-                    getSalt("2865755738@qq.com")
+                    commitments[0]
                 )
             );
             wallet = Wallet(payable(walletAddr));
@@ -119,4 +125,8 @@ contract walletTest is Test {
         }
         vm.stopPrank();
     }
+
+    
+
+
 }

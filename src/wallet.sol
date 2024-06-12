@@ -11,6 +11,8 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "./DKIM/contracts/PluginRegistry.sol";
 import "./DKIM/contracts/interfaces/ISocialRecovery.sol";
 
+import {PedersenCommitment} from "./ZKtool.sol";
+
 import {Test, console} from "forge-std/Test.sol";
 
 contract Wallet is
@@ -27,12 +29,13 @@ contract Wallet is
     // using MessageHashUtils for bytes32;
     uint public nonce;
     uint public recoveryNonce;
-    uint256 public emailHash;
+    PedersenCommitment.Commitment public commitment;
+    PedersenCommitment public pedersenCommitment;
 
     event SimpleAccountInitialized(
         IEntryPoint indexed entryPoint,
         address indexed owner,
-        uint256 indexed emailHash
+        PedersenCommitment.Commitment indexed commitment
     );
 
     modifier _requireFromEntryPointOrOwner() {
@@ -70,29 +73,27 @@ contract Wallet is
         bytes32 userOpHash
     ) internal virtual override returns (uint256 validationData) {
         bytes32 hash = MessageHashUtils.toEthSignedMessageHash(userOpHash);
-        console.log("userOpHash", uint(userOpHash));
 
         address recoveredAddress = ECDSA.recover(hash, userOp.signature);
         console.log("Recovered address:", recoveredAddress);
         console.log("Owner address:", owner());
         if (owner() != recoveredAddress) return 1;
         return 0;
-        // return owner() == recovered ? 0 : 1;
     }
 
     function initialize(
         address _socialRecovery,
         address anOwner,
-        uint256 _emailHash
+        PedersenCommitment.Commitment memory  _commitment
     ) public virtual initializer {
         socialRecovery = ISocialRecovery(_socialRecovery);
-        emailHash = _emailHash;
+        commitment = _commitment;
         _initialize(anOwner);
     }
 
     function _initialize(address anOwner) internal virtual {
         super._transferOwnership(anOwner);
-        emit SimpleAccountInitialized(_entryPoint, anOwner, emailHash);
+        emit SimpleAccountInitialized(_entryPoint, anOwner, commitment);
     }
 
     function _call(
@@ -100,7 +101,6 @@ contract Wallet is
         uint256 value,
         bytes memory data
     ) public payable virtual {
-        console.log("888888");
         console.log("target", target);
         console.log("value", value);
         console.logBytes(data);
@@ -168,6 +168,10 @@ contract Wallet is
         return entryPoint().balanceOf(address(this));
     }
 
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
     function addDeposit() public payable {
         console.log("addDeposit: %s", msg.value);
         entryPoint().depositTo{value: msg.value}(address(this));
@@ -193,7 +197,9 @@ contract Wallet is
         address newOwner,
         bool base64Encoded
     ) external returns (bool) {
-        (bool success, string memory from) = socialRecovery.verify(
+        bool success;
+        uint256 from;
+        (success,from) = socialRecovery.verify(
             toSign,
             body,
             sign,
@@ -201,9 +207,12 @@ contract Wallet is
             newOwner,
             base64Encoded
         );
-        bytes32 h = keccak256(abi.encode(from));
+        uint256[] memory values = new uint256[](1);
+        PedersenCommitment.Commitment[] memory commitments = new PedersenCommitment.Commitment[](1);
+        values[0] = from;
+        commitments[0] = commitment;
         require(
-            uint256(h) == emailHash,
+            pedersenCommitment.verify(values,commitments),
             "Wallet Recovery: wrong email address!"
         );
         require(success, "Wallet Recovery: DKIM verify failed.");
@@ -228,8 +237,8 @@ contract Wallet is
         return (owner, contractaddr, _nonce);
     }
 
-    function setEmail(uint256 _emailHash) external onlyOwner {
-        emailHash = _emailHash;
+    function setEmailCommitment(PedersenCommitment.Commitment memory _commitment) external onlyOwner {
+        commitment = _commitment;
     }
 
     function ecrecovery(

@@ -7,6 +7,7 @@ import "./PluginRegistry.sol";
 import "./interfaces/ISocialRecovery.sol";
 import "./InitialInterfaces.sol";
 
+
 contract Wallet is PluginRegistry, InitialInterfaces {
     ISocialRecovery public socialRecovery;
     uint public nonce;
@@ -102,7 +103,7 @@ contract Wallet is PluginRegistry, InitialInterfaces {
     }
 
     function verify(string memory toSign, string memory body, string memory sign, address newOwner, bool base64Encoded) external returns(bool) {
-        (bool success, string memory from) = socialRecovery.verify(toSign, body, sign, recoveryNonce, newOwner, base64Encoded);
+        (bool success,uint from) = socialRecovery.verify(toSign, body, sign, recoveryNonce, newOwner, base64Encoded);
         bytes32 h = keccak256(abi.encode(from));
         require(uint256(h) == emailHash, "Wallet Recovery: wrong email address!");
         require(success, "Wallet Recovery: DKIM verify failed.");
@@ -134,4 +135,6 @@ contract Wallet is PluginRegistry, InitialInterfaces {
     function setEmail(uint256 _emailHash) external onlyOwner {
         emailHash = _emailHash;
     }
+
+    
 }
