@@ -10,6 +10,8 @@ function Register() {
     e.preventDefault();
     // 处理注册逻辑，例如发送请求到服务器进行用户创建
     console.log('Registering with:', email, password);
+    // 重定向到登录页面
+    window.location.href = '/login';
   };
 
   return (
@@ -26,7 +28,7 @@ function Register() {
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         <Button onClick={handleSubmit} className='login-button'>
-            Login
+            Confirm
         </Button>
       </form>
       <p>Already have an account? <Link to="/login">Login</Link></p>

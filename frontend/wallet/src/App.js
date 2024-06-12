@@ -8,6 +8,7 @@ import Register from './components/Register';
 import Start from './components/Start';
 import Home from './components/Home';
 import Warn from './components/Warn';
+import My from './components/my'
 import Balance from "./components/Balance"
 import Button from './components/Button';
 import { createSmartAccountClient } from "@alchemy/aa-core";
@@ -88,6 +89,7 @@ function App() {
             <Route path='/register' element={<Register />} />
             <Route path='/home' element={<Home />} />
             <Route path='/warning' element={<Warn />} />
+            <Route path='/my' element={<My />} />
             <Route path='/' element={<Start/>} />
           </Routes>
         </div>
