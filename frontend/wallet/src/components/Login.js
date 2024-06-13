@@ -6,18 +6,30 @@ import '../css/Login.css'
 function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [message, setMessage] = useState('');
     const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         // 处理登录逻辑，例如发送请求到服务器进行身份验证
         console.log('Logging in with:', email, password);
-        // 登录成功后，可以跳转到其他页面，例如首页
-        if(email === '111' && password === '111'){
-            navigate('/home');
-        }else{
-            alert('Invalid username or password')
+        try{
+            const response = await axios.post('/user/sign-in', { email, password });
+
+            // 登录成功后，可以跳转到其他页面，例如首页
+            if(response.data.success){
+                setMessage('登录成功')
+                localStorage.setItem('token', response.data.token);
+                navigate('/home');
+            }else{
+                setMessage('登录失败:'+response.data.message)
+            }
+        }catch(error){
+            console.error(error);
+            setMessage('登录失败: 服务器错误');
         }
+        
+        
     };
 
     return (
