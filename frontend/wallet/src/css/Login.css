@@ -15,3 +15,17 @@
     top: 20%;
     left: 34%
 }
+.container .container-inner .container-email{
+    height: 50px;
+    border-radius: 20px;
+    padding: 10px;
+    position:relative;
+}
+.container .container-inner .container-password{
+    height: 70px;
+    position:relative;
+}
+.container .container-inner .container-button{
+    height: 50px;
+    position: relative;
+}
