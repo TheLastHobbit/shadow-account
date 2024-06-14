@@ -16,6 +16,7 @@
     left: 34%
 }
 .container .container-inner .container-email{
+    width: 300px;
     height: 50px;
     border-radius: 20px;
     padding: 10px;
