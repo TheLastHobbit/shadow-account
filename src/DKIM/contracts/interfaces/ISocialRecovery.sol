@@ -14,6 +14,6 @@ interface ISocialRecovery {
         view
         returns (
             bool success,
-            string memory from
+            uint256 from
         );
 }

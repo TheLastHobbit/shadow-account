@@ -2,15 +2,30 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/Button';
 import {Input} from 'antd';
+import { createAccount, createWallet } from '../util/wallet.js';
+import axios from 'axios';
 
 function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // 处理注册逻辑，例如发送请求到服务器进行用户创建
     console.log('Registering with:', email, password);
+    try{
+      const response = await axios.post('/user/sign-up', { email, password });
+      setMessage(response.data.message);
+    }catch(error){
+      console.error(error);
+      setMessage('Registration failed');
+    }
+    // 调用钱包注册方法
+    // const result = createWallet;
+    // console.log(result);
+    // 重定向到登录页面
+    window.location.href = '/login';
   };
 
   return (

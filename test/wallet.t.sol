@@ -10,6 +10,7 @@ import {PublicKeyOracle} from "../src/DKIM/contracts/PublicKeyOracle.sol";
 import {MyToken} from "./util/MyToken.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {PackedUserOperation} from "lib/account-abstraction/contracts/interfaces/PackedUserOperation.sol";
+import {PedersenCommitment} from "../src/ZKtool.sol";
 
 contract walletTest is Test {
     Wallet public wallet;
@@ -18,6 +19,7 @@ contract walletTest is Test {
     SocialRecovery public socialRecovery;
     PublicKeyOracle public publicKeyOracle;
     MyToken public myToken;
+    PedersenCommitment public pedersenCommitment;
 
     address bob = makeAddr("bob");
     address admin = makeAddr("admin");
@@ -32,17 +34,21 @@ contract walletTest is Test {
         vm.startPrank(admin);
         {
             publicKeyOracle = new PublicKeyOracle();
+            pedersenCommitment = new PedersenCommitment();
             socialRecovery = new SocialRecovery(address(publicKeyOracle));
             entryPoint = new MyEntryPoint();
             walletFactory = new WalletFactory(
                 entryPoint,
                 address(socialRecovery)
             );
+            uint256[] memory values = new uint256[](1);
+            values[0] = getSalt("2865755738@qq.com");
+            PedersenCommitment.Commitment[] memory commitments = pedersenCommitment.generateCommitments(values);
             address walletAddr = address(
                 walletFactory.createAccount(
                     alice,
                     getSalt("alice"),
-                    getSalt("2865755738@qq.com")
+                    commitments[0]
                 )
             );
             wallet = Wallet(payable(walletAddr));
@@ -95,6 +101,8 @@ contract walletTest is Test {
             signature: "0x"
         });
 
+        
+
         bytes32 puohash = entryPoint.getUserOpHash(puo);
         console.log("puohash:",uint(puohash));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", puohash)));
@@ -109,6 +117,7 @@ contract walletTest is Test {
             // myToken.approve(address(wallet), 20 ether);
             PackedUserOperation[] memory ops = new PackedUserOperation[](1);
             ops[0] = puo;
+            console.log("ops:",ops);
             console.log("wallet:",address(wallet));
             // wallet.execute();
             entryPoint.handleOps(ops, payable(admin));
@@ -119,4 +128,8 @@ contract walletTest is Test {
         }
         vm.stopPrank();
     }
+
+    
+
+
 }
