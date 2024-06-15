@@ -15,6 +15,10 @@ contract MyScript is Script {
         PublicKeyOracle pubKeyOracle = new PublicKeyOracle();
         SocialRecovery dkim = new SocialRecovery(address(pubKeyOracle));
         WalletFactory factory = new WalletFactory((entryPoint),address(dkim));
+        console.log("EntryPoint: ", address(entryPoint));
+        console.log("Factory: ", address(factory));
+        console.log("DKIM: ", address(dkim));
+        console.log("PubKeyOracle: ", address(pubKeyOracle));
         vm.stopBroadcast();
     }
 }
