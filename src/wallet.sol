@@ -9,7 +9,11 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 import "./DKIM/contracts/PluginRegistry.sol";
-import "./DKIM/contracts//interfaces/ISocialRecovery.sol";
+import "./DKIM/contracts/interfaces/ISocialRecovery.sol";
+
+import {PedersenCommitment} from "./ZKtool.sol";
+
+import {Test, console} from "forge-std/Test.sol";
 
 contract Wallet is
     BaseAccount,
@@ -20,15 +24,18 @@ contract Wallet is
 {
     IEntryPoint private immutable _entryPoint;
     ISocialRecovery public socialRecovery;
+    uint256 public count;
     using ECDSA for bytes32;
+    // using MessageHashUtils for bytes32;
     uint public nonce;
     uint public recoveryNonce;
-    uint256 public emailHash;
+    PedersenCommitment.Commitment public commitment;
+    PedersenCommitment public pedersenCommitment;
 
     event SimpleAccountInitialized(
         IEntryPoint indexed entryPoint,
         address indexed owner,
-        uint256 indexed emailHash
+        PedersenCommitment.Commitment indexed commitment
     );
 
     modifier _requireFromEntryPointOrOwner() {
@@ -55,32 +62,51 @@ contract Wallet is
 
     receive() external payable {}
 
+    function intToBytes32(uint256 x) public pure returns (bytes32 result) {
+        assembly {
+            result := x
+        }
+    }
+
     function _validateSignature(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
     ) internal virtual override returns (uint256 validationData) {
         bytes32 hash = MessageHashUtils.toEthSignedMessageHash(userOpHash);
-        if (owner() != ECDSA.recover(hash, userOp.signature)) return 1;
+
+        address recoveredAddress = ECDSA.recover(hash, userOp.signature);
+        console.log("Recovered address:", recoveredAddress);
+        console.log("Owner address:", owner());
+        if (owner() != recoveredAddress) return 1;
         return 0;
     }
 
     function initialize(
         address _socialRecovery,
         address anOwner,
-        uint256 _emailHash
+        PedersenCommitment.Commitment memory  _commitment
     ) public virtual initializer {
         socialRecovery = ISocialRecovery(_socialRecovery);
-        emailHash = _emailHash;
+        commitment = _commitment;
         _initialize(anOwner);
     }
 
     function _initialize(address anOwner) internal virtual {
         super._transferOwnership(anOwner);
-        emit SimpleAccountInitialized(_entryPoint, anOwner,emailHash);
+        emit SimpleAccountInitialized(_entryPoint, anOwner, commitment);
     }
 
-    function _call(address target, uint256 value, bytes memory data) internal {
+    function _call(
+        address target,
+        uint256 value,
+        bytes memory data
+    ) public payable virtual {
+        console.log("target", target);
+        console.log("value", value);
+        console.logBytes(data);
         (bool success, bytes memory result) = target.call{value: value}(data);
+        console.log("success:",success);
+        
         if (!success) {
             assembly {
                 revert(add(result, 32), mload(result))
@@ -93,7 +119,16 @@ contract Wallet is
         uint256 value,
         bytes calldata func
     ) external _requireFromEntryPointOrOwner {
+        console.log("Executing");
         _call(dest, value, func);
+    }
+
+    // function execute() external {
+    //     count++;
+    // }
+
+    function getCount() external view returns (uint256) {
+        return count;
     }
 
     function executeBatch(
@@ -133,7 +168,12 @@ contract Wallet is
         return entryPoint().balanceOf(address(this));
     }
 
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
     function addDeposit() public payable {
+        console.log("addDeposit: %s", msg.value);
         entryPoint().depositTo{value: msg.value}(address(this));
     }
 
@@ -150,45 +190,61 @@ contract Wallet is
         socialRecovery = ISocialRecovery(_socialRecovery);
     }
 
-    function verify(string memory toSign, string memory body, string memory sign, address newOwner, bool base64Encoded) external returns(bool) {
-        (bool success, string memory from) = socialRecovery.verify(toSign, body, sign, recoveryNonce, newOwner, base64Encoded);
-        bytes32 h = keccak256(abi.encode(from));
-        require(uint256(h) == emailHash, "Wallet Recovery: wrong email address!");
+    function verify(
+        string memory toSign,
+        string memory body,
+        string memory sign,
+        address newOwner,
+        bool base64Encoded
+    ) external returns (bool) {
+        bool success;
+        uint256 from;
+        (success,from) = socialRecovery.verify(
+            toSign,
+            body,
+            sign,
+            recoveryNonce,
+            newOwner,
+            base64Encoded
+        );
+        uint256[] memory values = new uint256[](1);
+        PedersenCommitment.Commitment[] memory commitments = new PedersenCommitment.Commitment[](1);
+        values[0] = from;
+        commitments[0] = commitment;
+        require(
+            pedersenCommitment.verify(values,commitments),
+            "Wallet Recovery: wrong email address!"
+        );
         require(success, "Wallet Recovery: DKIM verify failed.");
         transferOwnership(newOwner);
         return true;
     }
 
-      function getRecoveryBody(address newOwner)
-        public
-        view
-        returns (bytes memory)
-    {
+    function getRecoveryBody(
+        address newOwner
+    ) public view returns (bytes memory) {
         return abi.encode(recoveryNonce + 1, newOwner);
     }
 
-    function splitbody(bytes memory body)
+    function splitbody(
+        bytes memory body
+    )
         internal
         pure
-        returns (
-            bytes memory owner,
-            bytes memory contractaddr,
-            uint _nonce
-        )
+        returns (bytes memory owner, bytes memory contractaddr, uint _nonce)
     {
         (owner, contractaddr, _nonce) = abi.decode(body, (bytes, bytes, uint));
         return (owner, contractaddr, _nonce);
     }
 
-    function setEmail(uint256 _emailHash) external onlyOwner {
-        emailHash = _emailHash;
+    function setEmailCommitment(PedersenCommitment.Commitment memory _commitment) external onlyOwner {
+        commitment = _commitment;
     }
 
-    function ecrecovery(bytes32 hash, bytes memory signature)
-        public
-        pure
-        returns (address)
-    {
+    function ecrecovery(
+        bytes32 hash,
+        bytes memory signature
+    ) public pure returns (address) {
         bytes32 r;
         bytes32 s;
         uint8 v;

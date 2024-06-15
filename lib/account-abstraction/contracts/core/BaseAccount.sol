@@ -7,7 +7,7 @@ pragma solidity ^0.8.23;
 import "../interfaces/IAccount.sol";
 import "../interfaces/IEntryPoint.sol";
 import "./UserOperationLib.sol";
-
+import {Test, console} from "forge-std/Test.sol";
 /**
  * Basic account implementation.
  * This contract provides the basic logic for implementing the IAccount interface - validateUserOp
@@ -37,6 +37,7 @@ abstract contract BaseAccount is IAccount {
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) external virtual override returns (uint256 validationData) {
+        console.log("2222222");
         _requireFromEntryPoint();
         validationData = _validateSignature(userOp, userOpHash);
         _validateNonce(userOp.nonce);

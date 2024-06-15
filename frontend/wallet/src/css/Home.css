@@ -1,0 +1,66 @@
+.home-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;    /* 垂直居中 */
+    height: 600px;
+    font-size: 1rem;
+    flex-direction: column; /* 设置为列方向，使子元素上下排列 */
+    /* font-weight: bold;
+    color: #fff; */
+}
+
+.home-container .balance{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.home-container .send{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 100px;
+}
+
+.home-container .send_to .input{
+    margin-top: 30px;
+}
+
+.home-container .send_to .select{
+    margin-top: 30px;
+}
+
+.home-container .send_to .button{
+    margin-top: 30px;
+}
+
+.home-container .send_to .input Input{
+    width: 400px;
+    height: 50px;
+    border-radius: 5px;
+}
+
+.home-container .send_to .input Input:focus{
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 10px #007bff;
+}
+
+.home-container .send_to .select .select_chain{
+    width: 400px;
+    height: 50px;
+    border-radius: 5px;
+}
+
+.home-container .send_to .select option{
+    width: 400px;
+    height: 50px;
+    border-radius: 5px;
+}
+
+.home-container .send_to .select:focus{
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 10px #007bff;
+}
+
