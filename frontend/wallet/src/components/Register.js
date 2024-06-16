@@ -38,22 +38,30 @@ function Register() {
   return (
     <div className='container'>
       <div className='container-inner'>
-      <h2>Register</h2>
-      <form>
-        <div>
-          <label>Email:</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </div>
-        <div>
-          <label>Password:</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        </div>
-        <Button onClick={handleSubmit} className='login-button'>
-            Confirm
-        </Button>
-      </form>
-      {message && <p>{message}</p>}
-      <p>Already have an account? <Link to="/login">Login</Link></p>
+        <h2>Register</h2>
+        <form>
+          <div className='container-email'>
+            <label>Email:</label>
+            <Input 
+              addonBefore="Email"
+              placeholder='Enter your email'
+              autoFocus/*光标自动定位到输入框 */
+              type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className='container-password'>
+            <label>Password:</label>
+            <Input 
+              addonBefore="Password"
+              placeholder='Enter your password'
+              type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </div>
+          <div className='container-button'>
+            <Button onClick={handleSubmit} className='login-button'>
+              Login
+            </Button>
+          </div>
+        </form>
+        <p>Already have an account? <Link to="/login">Login</Link></p>
       </div>
     </div>
   );

@@ -53,13 +53,11 @@ export async function getCommitment(email) {
 
     // 将字节数组转换为 uint256
     const uint256Value = ethers.BigNumber.from(hashBytes);
-
     // 将 uint256Value 转换为十进制字符串
     const decimalValue = uint256Value.toString();
-
     // 将 decimalValue 包装在数组中
     const uint256Array = [decimalValue];
-  
+
       // 打印 uint256Array 确认内容
       console.log('uint256Array:', uint256Array);
     try {
