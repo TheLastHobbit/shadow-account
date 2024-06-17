@@ -47,6 +47,8 @@ contract walletTest is Test {
             console.log("uint256:", values[0]);
 
             PedersenCommitment.Commitment[] memory commitments = pedersenCommitment.generateCommitments(values);
+            address addr = walletFactory.getAddress(alice,getSalt("alice"),commitments[0]);
+            console.log("wallet address:", addr);
             address walletAddr = address(
                 walletFactory.createAccount(
                     alice,
@@ -54,6 +56,7 @@ contract walletTest is Test {
                     commitments[0]
                 )
             );
+            
             wallet = Wallet(payable(walletAddr));
             console.log("wallet:",address(wallet));
             myToken = new MyToken(admin);
