@@ -11,5 +11,4 @@ type RegisterReq struct {
 }
 
 type RegisterRes struct {
-	OK bool
 }

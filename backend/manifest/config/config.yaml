@@ -19,6 +19,6 @@ database:
     stdout: true
 
   default:
-    link: "mysql:root:1296262867@tcp(127.0.0.1:3306)/did"
+    link: "mysql:root:1234567@tcp(127.0.0.1:3306)/did"
     debug: true
 

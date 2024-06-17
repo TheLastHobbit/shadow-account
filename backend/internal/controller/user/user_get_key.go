@@ -4,8 +4,7 @@ import (
 	"context"
 	v1 "github.com/gogf/gf-demo-user/v2/api/user/v1"
 	"github.com/gogf/gf-demo-user/v2/internal/dao"
-	"github.com/gogf/gf-demo-user/v2/internal/model"
-	"github.com/gogf/gf-demo-user/v2/internal/service"
+	"github.com/gogf/gf-demo-user/v2/internal/utils/sss"
 )
 
 func (c *ControllerV1) GetKey(ctx context.Context, req *v1.GetKeyReq) (res *v1.GetKeyRes, err error) {
@@ -18,13 +17,9 @@ func (c *ControllerV1) GetKey(ctx context.Context, req *v1.GetKeyReq) (res *v1.G
 		shareByte,
 		[]byte(shareBack),
 	}
-	key, _ := service.SSS().Decrypt(ctx, model.DecryptInput{
-		Shares: shares,
-		N:      2,
-	})
 
 	res = &v1.GetKeyRes{
-		Key: string(key),
+		Key: string(sss.Decrypt(shares, 2)),
 	}
 
 	return

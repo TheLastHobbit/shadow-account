@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/gogf/gf-demo-user/v2/api/user/v1"
-	"github.com/gogf/gf-demo-user/v2/internal/consts"
 	"github.com/gogf/gf-demo-user/v2/internal/dao"
-	"github.com/gogf/gf-demo-user/v2/internal/model"
-	"github.com/gogf/gf-demo-user/v2/internal/service"
+	"github.com/gogf/gf-demo-user/v2/internal/utils/email"
 	"github.com/gogf/gf-demo-user/v2/internal/utils/verification"
 	"github.com/gogf/gf/v2/errors/gerror"
 )
@@ -29,19 +27,8 @@ func (c *ControllerV1) ResetPassword(ctx context.Context, req *v1.ResetPasswordR
 	}
 	fmt.Println("验证码：", code)
 	fmt.Println(req.Passport)
-	err = service.Email().SendEmail(ctx, model.EmailSendInput{
-		From:     consts.From,
-		Password: consts.Password,
-		To:       req.Passport,
-		Subject:  "重置密码验证",
-		Body:     "您的验证码为：\n" + code,
-	})
-	if err != nil {
-		return
-	}
-	res = &v1.ResetPasswordRes{
-		OK: true,
-	}
+	email.SendMail("重置密码验证码", "您的验证码是：\n"+code, req.Passport)
+	// 不存在则返回错误
 	return
 
 }

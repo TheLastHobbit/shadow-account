@@ -23,6 +23,4 @@ type IUserV1 interface {
 	GetShare(cxt context.Context, req *v1.GetShareReq) (res *v1.GetShareRes, err error)
 	SendKey(cxt context.Context, req *v1.SendKeyReq) (res *v1.SendKeyRes, err error)
 	ResetPassword(cxt context.Context, req *v1.ResetPasswordReq) (res *v1.ResetPasswordRes, err error)
-	SendShare(cxt context.Context, req *v1.SendShareReq) (res *v1.SendShareRes, err error)
-	SocialRecovery(cxt context.Context, req *v1.SocialRecoveryReq) (res *v1.SocialRecoveryRes, err error)
 }
