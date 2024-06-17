@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-
 	"github.com/gogf/gf-demo-user/v2/api/user/v1"
 	"github.com/gogf/gf-demo-user/v2/internal/service"
 )

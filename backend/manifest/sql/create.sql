@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS `user`;
+DROP TABLE IF EXISTS `shares`;
+
 CREATE TABLE `user`
 (
     `id`        int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'User ID',

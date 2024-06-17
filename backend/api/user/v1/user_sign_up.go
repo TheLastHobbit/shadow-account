@@ -9,4 +9,6 @@ type SignUpReq struct {
 	Password2 string `v:"required|length:6,16|same:Password"`
 	Nickname  string
 }
-type SignUpRes struct{}
+type SignUpRes struct {
+	OK bool
+}

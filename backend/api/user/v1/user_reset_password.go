@@ -8,4 +8,6 @@ type ResetPasswordReq struct {
 	Password  string `v:"required|length:6,16"`
 	Password2 string `v:"required|length:6,16|same:Password"`
 }
-type ResetPasswordRes struct{}
+type ResetPasswordRes struct {
+	OK bool
+}
