@@ -5,6 +5,7 @@ import BottomBar from './BottomBar';
 import { Avatar, List, Skeleton } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import Balance from './Balance';
+import '../css/My.css';
 
 function My(){
     const count = 3;
@@ -72,6 +73,7 @@ function My(){
             </div>
             <p3>Your Guardian emials</p3>
             <Button onClick={handleAddEmail}>Add your Guardian mailbox</Button>
+            <div className='my-list'>
             <List
                 className="demo-loadmore-list"
                 loading={initLoading}
@@ -91,6 +93,7 @@ function My(){
                     </List.Item>
                 )}
             />
+            </div>
             
             <BottomBar></BottomBar>
 

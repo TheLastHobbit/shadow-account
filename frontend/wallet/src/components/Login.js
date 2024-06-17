@@ -3,6 +3,8 @@ import { Link,useNavigate } from 'react-router-dom';
 import Button from './Button';
 import '../css/Login.css'
 import axios from 'axios';
+import {Input} from 'antd';
+
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -37,18 +39,27 @@ function Login() {
         <div className='container'>
             <div className='container-inner'>
             <h2>Login</h2>
-            <form >
-                <div className='email'>
-                    <label>Email:</label>
-                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <form>
+                <div className='container-email'>
+                <label></label>
+                    <Input 
+                        addonBefore="Email"
+                        placeholder='Enter your email'
+                        autoFocus/*光标自动定位到输入框 */
+                        type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
-                <div className='password'>
-                    <label>Password:</label>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <div className='container-password'>
+                    <label></label>
+                    <Input 
+                        addonBefore="Password"
+                        placeholder='Enter your password'
+                        type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
+                <div className='container-button'>
                 <Button onClick={handleSubmit} className='login-button'>
                     Login
                 </Button>
+                </div>
             </form>
             <p>Don't have an account? <Link to="/register">Register</Link></p>
             </div> 

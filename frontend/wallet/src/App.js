@@ -9,8 +9,6 @@ import Start from './components/Start';
 import Home from './components/Home';
 import Warn from './components/Warn';
 import My from './components/my'
-import Balance from "./components/Balance"
-import Button from './components/Button';
 import {
   getVersion060EntryPoint,
   toSmartContractAccount,
