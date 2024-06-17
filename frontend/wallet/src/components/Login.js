@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link,useNavigate } from 'react-router-dom';
 import Button from './Button';
-import '../css/Login.css'
+import '../css/Login.css';
+import axios from 'axios';
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -14,7 +15,7 @@ function Login() {
         // 处理登录逻辑，例如发送请求到服务器进行身份验证
         console.log('Logging in with:', email, password);
         try{
-            const response = await axios.post('/user/sign-in', { email, password });
+            const response = await axios.post('http://127.0.0.1:8000/user/sign-in', { email, password });
 
             // 登录成功后，可以跳转到其他页面，例如首页
             if(response.data.success){
@@ -23,6 +24,7 @@ function Login() {
                 navigate('/home');
             }else{
                 setMessage('登录失败:'+response.data.message)
+                console.error(response.data);
             }
         }catch(error){
             console.error(error);
@@ -49,6 +51,7 @@ function Login() {
                     Login
                 </Button>
             </form>
+            {message && <p>{message}</p>}
             <p>Don't have an account? <Link to="/register">Register</Link></p>
             </div> 
         </div>

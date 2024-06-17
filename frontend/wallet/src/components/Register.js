@@ -4,6 +4,7 @@ import Button from '../components/Button';
 import { createAccount, createWallet } from '../util/wallet.js';
 import axios from 'axios';
 
+
 function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,17 +15,19 @@ function Register() {
     // 处理注册逻辑，例如发送请求到服务器进行用户创建
     console.log('Registering with:', email, password);
     try{
-      const response = await axios.post('/user/sign-up', { email, password });
+      const response = await axios.post('http://127.0.0.1:8000/user/sign-up', { email, password });
       setMessage(response.data.message);
+      console.log('success')
+      window.location.href = '/login';
     }catch(error){
       console.error(error);
-      setMessage('Registration failed');
+      setMessage('Registration failed'+error);
     }
     // 调用钱包注册方法
     // const result = createWallet;
     // console.log(result);
     // 重定向到登录页面
-    window.location.href = '/login';
+    
   };
 
   return (
