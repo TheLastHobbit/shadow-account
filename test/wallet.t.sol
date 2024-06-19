@@ -42,8 +42,13 @@ contract walletTest is Test {
                 address(socialRecovery)
             );
             uint256[] memory values = new uint256[](1);
-            values[0] = getSalt("2865755738@qq.com");
+            // values[0] = getSalt("2865755738@qq.com");
+            values[0] = 12160266183512595673888722153253610585066875951680911826333493782620438974488;
+            console.log("uint256:", values[0]);
+
             PedersenCommitment.Commitment[] memory commitments = pedersenCommitment.generateCommitments(values);
+            address addr = walletFactory.getAddress(alice,getSalt("alice"),commitments[0]);
+            console.log("wallet address:", addr);
             address walletAddr = address(
                 walletFactory.createAccount(
                     alice,
@@ -51,6 +56,7 @@ contract walletTest is Test {
                     commitments[0]
                 )
             );
+            
             wallet = Wallet(payable(walletAddr));
             console.log("wallet:",address(wallet));
             myToken = new MyToken(admin);
@@ -117,7 +123,7 @@ contract walletTest is Test {
             // myToken.approve(address(wallet), 20 ether);
             PackedUserOperation[] memory ops = new PackedUserOperation[](1);
             ops[0] = puo;
-            console.log("ops:",ops);
+            // console.log("ops:",ops);
             console.log("wallet:",address(wallet));
             // wallet.execute();
             entryPoint.handleOps(ops, payable(admin));

@@ -19,17 +19,17 @@ contract PedersenCommitment {
             uint256 r = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, i))) % p;
             uint256 gm = expMod(g, values[i], p);
             uint256 hr = expMod(h, r, p);
-            uint256 c = gm * hr % p;
+            uint256 c = mulmod(gm, hr, p); // 使用 mulmod 确保不会溢出
             commitments[i] = Commitment(uintToString(c), r);
         }
 
         return commitments;
     }
 
-    function verify(uint256[] memory values, Commitment[] memory commitments) public pure returns (bool) {
+    function verify(uint256[] memory values, Commitment[] memory commitments) public view returns (bool) {
         uint256 combinedValue;
         for (uint256 i = 0; i < values.length; i++) {
-            combinedValue += values[i];
+            combinedValue = addmod(combinedValue, values[i], p); // 使用 addmod 确保不会溢出
         }
 
         uint256 gm = expMod(g, combinedValue, p);
@@ -37,12 +37,12 @@ contract PedersenCommitment {
         uint256 hr = 0;
 
         for (uint256 i = 0; i < commitments.length; i++) {
-            hr += commitments[i].r;
+            hr = addmod(hr, commitments[i].r, p); // 使用 addmod 确保不会溢出
             uint256 mAsUint = stringToUint(commitments[i].m); 
-            product = product * mAsUint % p;
+            product = mulmod(product, mAsUint, p); // 使用 mulmod 确保不会溢出
         }
 
-        uint256 C = gm * expMod(h, hr, p) % p;
+        uint256 C = mulmod(gm, expMod(h, hr, p), p); // 使用 mulmod 确保不会溢出
 
         return C == product;
     }
@@ -60,13 +60,12 @@ contract PedersenCommitment {
         bytes memory buffer = new bytes(digits);
         while (_value != 0) {
             digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + _value % 10));
+            buffer[digits] = bytes1(uint8(48 + uint8(_value % 10)));
             _value /= 10;
         }
         return string(buffer);
     }
 
-    // Helper function to convert string to uint256
     function stringToUint(string memory s) private pure returns (uint256 result) {
         bytes memory b = bytes(s);
         uint256 i;
@@ -80,6 +79,16 @@ contract PedersenCommitment {
     }
 
     function expMod(uint256 base, uint256 exp, uint256 mod) private pure returns (uint256) {
-        return base**exp % mod;
+        if (mod == 1) return 0;
+        uint256 result = 1;
+        base = base % mod;
+        while (exp > 0) {
+            if (exp % 2 == 1) {
+                result = mulmod(result, base, mod); // 使用 mulmod 确保不会溢出
+            }
+            exp = exp >> 1;
+            base = mulmod(base, base, mod); // 使用 mulmod 确保不会溢出
+        }
+        return result;
     }
 }
