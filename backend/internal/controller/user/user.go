@@ -4,7 +4,9 @@
 
 package user
 
-import "github.com/gogf/gf-demo-user/v2/internal/utils/verification"
+import (
+	"github.com/gogf/gf-demo-user/v2/internal/utils/verification"
+)
 
 // Verification 全局验证服务
 var Verification = verification.NewVerification()
