@@ -21,6 +21,7 @@ type SharesDao struct {
 // SharesColumns defines and stores column names for table shares.
 type SharesColumns struct {
 	Id       string // Share ID
+	Index    string // Share Index
 	Passport string // User Passport
 	Share    string // Share Content
 	CreateAt string // Created Time
@@ -30,6 +31,7 @@ type SharesColumns struct {
 // sharesColumns holds the columns for table shares.
 var sharesColumns = SharesColumns{
 	Id:       "id",
+	Index:    "index",
 	Passport: "passport",
 	Share:    "share",
 	CreateAt: "create_at",

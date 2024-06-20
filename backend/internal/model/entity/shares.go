@@ -11,6 +11,7 @@ import (
 // Shares is the golang structure for table shares.
 type Shares struct {
 	Id       uint        `json:"id"       orm:"id"        description:"Share ID"`
+	Index    uint        `json:"index"    orm:"index"     description:"Share Index"`
 	Passport string      `json:"passport" orm:"passport"  description:"User Passport"`
 	Share    string      `json:"share"    orm:"share"     description:"Share Content"`
 	CreateAt *gtime.Time `json:"createAt" orm:"create_at" description:"Created Time"`

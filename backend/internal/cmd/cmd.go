@@ -43,6 +43,8 @@ var (
 						"/user/social-recovery": userCtrl.SocialRecovery,
 						"/user/profile":         userCtrl.Profile,
 						"/user/send-share":      userCtrl.SendShare,
+						"/user/change-nickname": userCtrl.ChangeNickname,
+						"/user/delete-share":    userCtrl.DeleteShare,
 					})
 				})
 			})
