@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ethers } from 'ethers';
 import { Link } from 'react-router-dom';
 import Button from '../components/Button';
-import { signUOP, getHash, createAccount, getCommitment, createWallet, getSalt, getWalletAddress, createPackedUserOperation } from '../util/wallet.js';
+import { encodeCommitment,signUOP, getHash, createAccount, getCommitment, createWallet, getSalt, getWalletAddress, createPackedUserOperation } from '../util/wallet.js';
 import axios from 'axios';
 
 function Register() {
@@ -29,9 +29,10 @@ function Register() {
       const wallet = await createWallet();
       console.log("wallet:", wallet.address);
       const salt = await getSalt(email);
-      const commitment = await getCommitment(email);
-      console.log("salt:", salt.toString());
-      console.log("commitment:", commitment);
+      const uncodecommitment = await getCommitment(email);
+      const commitment = encodeCommitment(uncodecommitment[0]);
+      // console.log("salt:", salt.toString());
+      console.log("commitment2:", commitment);
       const walletAddress = await getWalletAddress(wallet.address, salt, commitment);
       console.log("walletAddress:", walletAddress);
 

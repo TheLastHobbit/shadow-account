@@ -376,6 +376,7 @@ contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard,
     function getUserOpHash(
         PackedUserOperation calldata userOp
     ) public view returns (bytes32) {
+        console.log("11111111111111111111111111111111111111111111111");
         return
             keccak256(abi.encode(userOp.hash(), address(this), block.chainid));
     }

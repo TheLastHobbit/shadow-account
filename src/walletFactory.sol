@@ -10,6 +10,10 @@ import {PedersenCommitment} from "./ZKtool.sol";
 contract WalletFactory {
     Wallet public immutable walletImplementation;
     address public dkim;
+    struct Commitment {
+        string m; 
+        uint256 r;
+    }
 
     constructor(IEntryPoint entryPoint, address _dkim) {
         walletImplementation = new Wallet(address(entryPoint));
@@ -19,7 +23,7 @@ contract WalletFactory {
     function getAddress(
         address owner,
         uint256 salt,
-        PedersenCommitment.Commitment memory emailHash
+        bytes memory commitment
     ) public view returns (address) {
         return
             Create2.computeAddress(
@@ -31,7 +35,7 @@ contract WalletFactory {
                             address(walletImplementation),
                             abi.encodeCall(
                                 Wallet.initialize,
-                                (dkim, owner, emailHash)
+                                (dkim, owner, commitment)
                             )
                         )
                     )
@@ -42,22 +46,25 @@ contract WalletFactory {
     function createAccount(
         address owner,
         uint256 salt,
-        PedersenCommitment.Commitment memory emailHash
+        bytes memory commitment
     ) external returns (Wallet) {
         // Get the counterfactual address
-        address addr = getAddress(owner, salt, emailHash);
+        address addr = getAddress(owner, salt, commitment);
         // Check if the code at the counterfactual address is non-empty
         uint256 codeSize = addr.code.length;
         if (codeSize > 0) {
             // If the code is non-empty, i.e. account already deployed, return the Wallet at the counterfactual address
             return Wallet(payable(addr));
         }
+        console.log("qqqq");
 
         // If the code is empty, deploy a new Wallet
         bytes memory walletInit = abi.encodeCall(
             Wallet.initialize,
-            (dkim, owner, emailHash)
+            (dkim, owner, commitment)
         );
+
+        console.log("qqqq");
         ERC1967Proxy proxy = new ERC1967Proxy{salt: bytes32(salt)}(
             address(walletImplementation),
             walletInit
@@ -66,5 +73,16 @@ contract WalletFactory {
         console.log("wallet:");
 
         return Wallet(payable(address(proxy)));
+    }
+
+    function create(
+        address owner,
+        uint256 salt
+    ) external returns (Wallet) {
+        console.log("create");
+        console.log("owner:", owner);
+        console.log("salt:", salt);
+
+        return walletImplementation;
     }
 }
