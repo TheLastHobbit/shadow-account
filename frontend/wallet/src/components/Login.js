@@ -6,7 +6,7 @@ import {Input} from 'antd';
 import axios from 'axios';
 
 function Login() {
-    const [email, setEmail] = useState('');
+    const [passport, setPassport] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
     const navigate = useNavigate();
@@ -14,19 +14,15 @@ function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         // 处理登录逻辑，例如发送请求到服务器进行身份验证
-        console.log('Logging in with:', email, password);
+        console.log('Logging in with:', passport, password);
         try{
-            const response = await axios.post('http://127.0.0.1:8000/user/sign-in', { email, password });
+            const response = await axios.post('http://127.0.0.1:8000/user/sign-in', { passport, password });
 
+            console.log(response.data);
             // 登录成功后，可以跳转到其他页面，例如首页
-            if(response.data.success){
-                setMessage('登录成功')
-                localStorage.setItem('token', response.data.token);
-                navigate('/home');
-            }else{
-                setMessage('登录失败:'+response.data.message)
-                console.error(response.data);
-            }
+            setMessage('登录成功')
+            // localStorage.setItem('token', response.data.token);
+            navigate('/home');
         }catch(error){
             console.error(error);
             setMessage('登录失败: 服务器错误');
@@ -45,7 +41,7 @@ function Login() {
                     <Input 
                         placeholder='Enter your email'
                         autoFocus/*光标自动定位到输入框 */
-                        type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                        type="email" value={passport} onChange={(e) => setPassport(e.target.value)} />
                 </div>
                 <div className='container-password'>
                     <label>Password:</label>

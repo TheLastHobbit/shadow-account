@@ -4,11 +4,16 @@ import { Link } from 'react-router-dom';
 import Button from '../components/Button';
 import { signUOP, getHash, createAccount, getCommitment, createWallet, getSalt, getWalletAddress, createPackedUserOperation } from '../util/wallet.js';
 import axios from 'axios';
+import {Input,Form} from 'antd';
+import storage from '../util/storageUtils.js';
+import memoryUser from '../util/memoryUtil.js';
 
 
 function Register() {
-  const [email, setEmail] = useState('');
+  const [passport, setPassport] = useState('');
   const [password, setPassword] = useState('');
+  const [password2, setPassword2] = useState('');
+  const [code, setCode] = useState('');
   const [message, setMessage] = useState('');
 
   function encodeGas(verificationGasLimit, callGasLimit) {
@@ -24,21 +29,22 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // 处理注册逻辑，例如发送请求到服务器进行用户创建
-    console.log('Registering with:', email, password);
+    // 处理注册逻辑，请求验证码
+    console.log('Registering with:', passport, password);
+    const response = await axios.post('http://127.0.0.1:8000/user/sign-up', { passport, password, password2 });
+    setMessage(response.data.message);
+    console.log(response);
+    console.log('success')
+    
+  
+  };
+  const handleConfirm = async (e) => {
+    e.preventDefault();
     try{
-      const response = await axios.post('http://127.0.0.1:8000/user/sign-up', { email, password });
-      setMessage(response.data.message);
-      console.log('success')
-      window.location.href = '/login';
-    }catch(error){
-    console.log("handleSubmit");
-
-    try {
       const wallet = await createWallet();
       console.log("wallet:", wallet.address);
-      const salt = await getSalt(email);
-      const commitment = await getCommitment(email);
+      const salt = await getSalt(passport);
+      const commitment = await getCommitment(passport);
       console.log("salt:", salt.toString());
       console.log("commitment:", commitment);
       const walletAddress = await getWalletAddress(wallet.address, salt, commitment);
@@ -60,22 +66,25 @@ function Register() {
       // 更新 puo 对象中的 signature
       const updatedPuo = { ...puo, signature };
       console.log("updatedPuo:", updatedPuo);
-
-
-      // 处理注册逻辑，例如发送请求到服务器进行用户创建
-      console.log('Registering with:', email, password);
-      const response = await axios.post('http://127.0.0.1:8000/user/sign-up', { email, password });
+      const response = await axios.post('http://127.0.0.1:8000/user/register', { passport, password, code });
       setMessage(response.data.message);
-    } catch (error) {
+      const user = response.data.data;
+      console.log(response);
+      console.log('success')
+      if(response.status == 200){
+        message.success('注册成功,你的钱包地址为',walletAddress);
+        memoryUser.user = user;
+        memoryUser.walletAddress = walletAddress;
+        storage.saveUser(user);
+        window.location.href = '/login';
+      }
+      
+    }catch (error) {
       console.error(error);
-      setMessage('Registration failed'+error);
-    }
-
-    // 重定向到登录页面
+    } 
     
-    // window.location.href = '/login';
   };
-
+  
   return (
     <div className='container'>
       <div className='container-inner'>
@@ -83,13 +92,21 @@ function Register() {
         <form>
           <div>
             <label>Email:</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input type="email" value={passport} onChange={(e) => setPassport(e.target.value)} />
           </div>
           <div>
             <label>Password:</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
-          <Button onClick={handleSubmit} className='login-button'>
+          <div>
+            <label>Password2:</label>
+            <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} />
+          </div>
+          <Form.Item label="验证码" className='container-captcha' value={code} onChange={(e) => setCode(e.target.value)}>
+            <Input/>
+            <Button onClick={handleSubmit}>send</Button>
+          </Form.Item>
+          <Button onClick={handleConfirm} className='login-button'>
             Confirm
           </Button>
         </form>
@@ -99,6 +116,4 @@ function Register() {
     </div>
   );
 }
-}
-
 export default Register;
