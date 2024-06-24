@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ethers } from 'ethers';
 import { Link } from 'react-router-dom';
 import Button from '../components/Button';
-import { signUOP, getHash, createAccount, getCommitment, createWallet, getSalt, getWalletAddress, createPackedUserOperation } from '../util/wallet.js';
+import { encodeCommitment,signUOP, getHash, createAccount, getCommitment, createWallet, getSalt, getWalletAddress, createPackedUserOperation } from '../util/wallet.js';
 import axios from 'axios';
 import {Input,Form} from 'antd';
 import storage from '../util/storageUtils.js';
@@ -44,15 +44,16 @@ function Register() {
       const wallet = await createWallet();
       console.log("wallet:", wallet.address);
       const salt = await getSalt(passport);
-      const commitment = await getCommitment(passport);
-      console.log("salt:", salt.toString());
-      console.log("commitment:", commitment);
+      const uncodecommitment = await getCommitment(passport);
+      const commitment = encodeCommitment(uncodecommitment[0]);
+      // console.log("salt:", salt.toString());
+      console.log("commitment2:", commitment);
       const walletAddress = await getWalletAddress(wallet.address, salt, commitment);
       console.log("walletAddress:", walletAddress);
 
       const initCode = await createAccount(wallet.address, salt, commitment);
-      const _accountGasLimits = encodeGas(100000, 200000);
-      const _gasFees = encodeGas(100000, 200000);
+      const _accountGasLimits = encodeGas(1000000, 2000000);
+      const _gasFees = encodeGas(1000000, 2000000);
 
       const puo = await createPackedUserOperation(walletAddress, initCode, "", _accountGasLimits, 1000000, _gasFees, "", "0x");
       console.log("puo:", puo);

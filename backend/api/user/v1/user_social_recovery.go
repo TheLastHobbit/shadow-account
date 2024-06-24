@@ -7,5 +7,5 @@ type SocialRecoveryReq struct {
 }
 
 type SocialRecoveryRes struct {
-	OK bool
+	OK bool `dc:"若恢复成功，返回true"`
 }

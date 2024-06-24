@@ -10,9 +10,9 @@ const rpcUrl = 'https://sepolia.infura.io/v3/dbe77fbac5b8494e8f03b1099638abfd';
 const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
 
 // const WALLET_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
-const FACTORY_ADDRESS = "0x85e1218B83e0bF7a7519d98dF5B73C4F8f19412C";
+const FACTORY_ADDRESS = "0xB71aa8d44E43D8a28E64fcBd6b651e0dbc0bdb4E";
 const ZKTOOL_ADDRESS = "0xCBa2Be4eCEa8c15F6FC4fd31C5fa85Bf0377291e"
-const ENTRYPOINT_ADDRESS = "0xF988D980A36c3E8da79AB91B4562fD81adA7ECE3";
+const ENTRYPOINT_ADDRESS = "0x1A5C9969F47Ef041c3A359ae4ae9fd9E70eA5653";
 
 // 因为前端只调只读函数不发送交易，所以不需要signer
 const factory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
@@ -31,21 +31,28 @@ export async function createWallet() {
 
 // 创建钱包所需要的initcode
 export async function createAccount(owner, salt, emailcommitment) {
-    const commitment = emailcommitment[0];
-    let initCode =
-        FACTORY_ADDRESS +
-        factory.interface
-            .encodeFunctionData("createAccount", [
-                owner,
-                salt,
-                {
-                    m: commitment.m,
-                    r: commitment.r
-                }
-            ])
-            .slice(2);
+    console.log("owner:",owner);
+    const encodedFunctionData = factory.interface.encodeFunctionData("createAccount", [
+        owner,
+        salt,
+        emailcommitment
+    ]);
+    console.log("encodedFunctionData: " + encodedFunctionData);
+            // 将地址和函数编码数据合并
+    const initCode = ethers.utils.hexConcat([FACTORY_ADDRESS, encodedFunctionData]);
     console.log("initCode: " + initCode);
     return initCode;
+}
+
+export function encodeCommitment(commitment) {
+    // 使用 ethers.js 的 defaultAbiCoder 进行编码
+    console.log("commitment: " + commitment);
+    const abiCoder = ethers.utils.defaultAbiCoder;
+    console.log("2222");
+    return abiCoder.encode(
+        ["string", "uint256"],
+        [commitment.m, commitment.r]
+    );
 }
 
 export async function getCommitment(email) {
@@ -124,8 +131,8 @@ export async function getHash(uop) {
 
 // 前端获取钱包地址
 export async function getWalletAddress(owner, salt, emailcommitment) {
-    console.log("getWalletAddress:", owner, salt, emailcommitment[0]);
-    const walletAddress = await factory.callStatic.getAddress(owner, salt, emailcommitment[0]);
+    console.log("getWalletAddress:", owner, salt, emailcommitment);
+    const walletAddress = await factory.callStatic.getAddress(owner, salt, emailcommitment);
     return walletAddress;
 }
 
@@ -146,9 +153,52 @@ const packedUserOperation = {
     signature: ''                // 签名
 };
 
-// export async function getWalletBalance(wallet,address) {
-//     return wallet.getBalance(address);
-// }
+export async function getERC20Balance(walletAddress, tokenAddress) {
+    try {
+      // ERC20 代币的 ABI（只包含我们需要的 balanceOf 函数）
+      const minABI = [
+        {
+          "constant":true,
+          "inputs":[{"name":"_owner","type":"address"}],
+          "name":"balanceOf",
+          "outputs":[{"name":"balance","type":"uint256"}],
+          "type":"function"
+        }
+      ];
+  
+      // 创建合约实例
+      const contract = new ethers.Contract(tokenAddress, minABI, provider);
+  
+      // 调用 balanceOf 函数
+      const balance = await contract.balanceOf(walletAddress);
+  
+      // 获取代币的小数位数
+      const decimals = await contract.decimals();
+  
+      // 将余额转换为易读格式
+      const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+  
+      return formattedBalance;
+    } catch (error) {
+      console.error('Error fetching ERC20 balance:', error);
+      throw error;
+    }
+  }
+
+export async function getETHBalance(walletAddress) {
+    try {
+      // 获取余额（返回值是 BigNumber 类型）
+      const balanceWei = await provider.getBalance(walletAddress);
+  
+      // 将余额从 Wei 转换为 ETH，并格式化为字符串
+      const balanceEth = ethers.utils.formatEther(balanceWei);
+  
+      return balanceEth;
+    } catch (error) {
+      console.error('Error fetching ETH balance:', error);
+      throw error;
+    }
+  }
 
 
 

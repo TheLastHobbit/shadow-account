@@ -29,13 +29,13 @@ contract Wallet is
     // using MessageHashUtils for bytes32;
     uint public nonce;
     uint public recoveryNonce;
-    PedersenCommitment.Commitment public commitment;
+    bytes public commitment;
     PedersenCommitment public pedersenCommitment;
 
     event SimpleAccountInitialized(
         IEntryPoint indexed entryPoint,
         address indexed owner,
-        PedersenCommitment.Commitment indexed commitment
+        bytes indexed commitment
     );
 
     modifier _requireFromEntryPointOrOwner() {
@@ -84,7 +84,7 @@ contract Wallet is
     function initialize(
         address _socialRecovery,
         address anOwner,
-        PedersenCommitment.Commitment memory  _commitment
+        bytes memory  _commitment
     ) public virtual initializer {
         socialRecovery = ISocialRecovery(_socialRecovery);
         commitment = _commitment;
@@ -208,9 +208,13 @@ contract Wallet is
             base64Encoded
         );
         uint256[] memory values = new uint256[](1);
+        (string memory m, uint256 r) = abi.decode(commitment, (string, uint256));
         PedersenCommitment.Commitment[] memory commitments = new PedersenCommitment.Commitment[](1);
         values[0] = from;
-        commitments[0] = commitment;
+        commitments[0] = PedersenCommitment.Commitment({
+            m: m,
+            r: r
+        });
         require(
             pedersenCommitment.verify(values,commitments),
             "Wallet Recovery: wrong email address!"
@@ -237,7 +241,7 @@ contract Wallet is
         return (owner, contractaddr, _nonce);
     }
 
-    function setEmailCommitment(PedersenCommitment.Commitment memory _commitment) external onlyOwner {
+    function setEmailCommitment(bytes memory _commitment) external onlyOwner {
         commitment = _commitment;
     }
 

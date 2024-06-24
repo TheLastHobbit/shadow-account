@@ -17,6 +17,30 @@
     },
     {
         "type": "function",
+        "name": "create",
+        "inputs": [
+            {
+                "name": "owner",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "salt",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "contract Wallet"
+            }
+        ],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
         "name": "createAccount",
         "inputs": [
             {
@@ -30,21 +54,9 @@
                 "internalType": "uint256"
             },
             {
-                "name": "emailHash",
-                "type": "tuple",
-                "internalType": "struct PedersenCommitment.Commitment",
-                "components": [
-                    {
-                        "name": "m",
-                        "type": "string",
-                        "internalType": "string"
-                    },
-                    {
-                        "name": "r",
-                        "type": "uint256",
-                        "internalType": "uint256"
-                    }
-                ]
+                "name": "commitment",
+                "type": "bytes",
+                "internalType": "bytes"
             }
         ],
         "outputs": [
@@ -84,21 +96,9 @@
                 "internalType": "uint256"
             },
             {
-                "name": "emailHash",
-                "type": "tuple",
-                "internalType": "struct PedersenCommitment.Commitment",
-                "components": [
-                    {
-                        "name": "m",
-                        "type": "string",
-                        "internalType": "string"
-                    },
-                    {
-                        "name": "r",
-                        "type": "uint256",
-                        "internalType": "uint256"
-                    }
-                ]
+                "name": "commitment",
+                "type": "bytes",
+                "internalType": "bytes"
             }
         ],
         "outputs": [

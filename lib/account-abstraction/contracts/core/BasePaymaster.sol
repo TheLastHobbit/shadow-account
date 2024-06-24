@@ -13,7 +13,7 @@ import "./UserOperationLib.sol";
  * provides helper methods for staking.
  * Validates that the postOp is called only by the entryPoint.
  */
-abstract contract BasePaymaster is IPaymaster, Ownable {
+abstract contract Base  is IPaymaster, Ownable {
     IEntryPoint public immutable entryPoint;
 
     uint256 internal constant PAYMASTER_VALIDATION_GAS_OFFSET = UserOperationLib.PAYMASTER_VALIDATION_GAS_OFFSET;

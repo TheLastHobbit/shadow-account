@@ -13,6 +13,7 @@ import (
 type Shares struct {
 	g.Meta   `orm:"table:shares, do:true"`
 	Id       interface{} // Share ID
+	Index    interface{} // Share Index
 	Passport interface{} // User Passport
 	Share    interface{} // Share Content
 	CreateAt *gtime.Time // Created Time

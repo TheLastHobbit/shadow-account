@@ -1,0 +1,58 @@
+Received: from mail-pj1-f68.google.com (unknown [209.85.216.68])
+	by gzga-mx-mta-g4-7 (Coremail) with SMTP id _____wD3f3KaPmxmfdIhAA--.22489S3;
+	Fri, 14 Jun 2024 20:59:07 +0800 (CST)
+Received: by mail-pj1-f68.google.com with SMTP id 98e67ed59e1d1-2c1ab9e17f6so1744332a91.1
+        for <yzym_143307lingyu@163.com>; Fri, 14 Jun 2024 05:59:07 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1718369946; x=1718974746; darn=163.com;
+        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=v7eLU02VAx4oR0IcpjxTtYcX4FchOQlZ9dxBjRXNoqg=;
+        b=AUlehNJMx/6YmbIym/7acbvkIENzaOsjyzWZ4FJcktRoXiFGp3QybDYURTi4XQQbsO
+         hzWbvPtVzAJ8XXj1ze8ZIvVHpFbZBDd5706pPZ9VMdVdLWb/0T7/dwz8DTlgmH28kZGO
+         1M0TGipblFe1Xxzw4Etb2vFjgsliU04GIowT7lOH1T1dvMGuTNL6VXNxVajlfWxbu0QH
+         KqgmYiniug6up52gMGQRWLrqEbUrWmlv/yB5MoomNUvSZMLNuufA2Fsr8Ch9ndwpi/JR
+         fvYqKcn54trsQ5UlXvmRdbqPa2rrDlaQedmENx65s4T+qg8GgVonpfS72d45i5TAZuIP
+         We6A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1718369946; x=1718974746;
+        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=v7eLU02VAx4oR0IcpjxTtYcX4FchOQlZ9dxBjRXNoqg=;
+        b=d9G6Kc/8S0lirQBGmUu407UxoxVyCJbQIt5XG1Jqiw6mh8yprNsL58A0rdzfuXcuT3
+         eM4/8v+ejO+ZjQ4CheNM10XVr2qZllCuxu9PXGuZG8mu7qqfa8rSHXA80up20jpbdSVi
+         0KMNEMJiFbYyiWOtYe1qyxz/MXI2WwToISBTr6Xq7liARRAsosGUM6meA9eLVFDQuQym
+         DHkP9Z3o5i+gtpfCrN3GafGQze1tbnFOvArTMaBuQlClw3JV4bmM7w0+Wm3v2NcqXslv
+         5asLDTRqKOpqANAEOH23kK0Xynk2VK288Cb2GxYY2rHz8JFbFyQLqkX41O9YuAq6mUEo
+         wjKg==
+X-Gm-Message-State: AOJu0YzGSOZb+RPttNtQNWepymNl2UBNLXRXE4UxUrE1gnIF7kMab2Q6
+	4qQbX+ej10u8HFoUQGcWmwZMjtHabVd39oyVaxF4BbhWR/Ad46clYKArV4PLKeJmvmwA4Asx9w0
+	xMW2xcXIzxU1NaQVOWT2WzunTf6yXh+5fRF8=
+X-Google-Smtp-Source: AGHT+IF9vTz9c8ugFNzsiq2ylSlrDEYiv6jUr0JPRL6pFR/xTV+pQjT2NwC77V+vFWSuKDCuQN/k1zgSHE4X2O/N2uA=
+X-Received: by 2002:a17:90a:d915:b0:2c4:c9e1:1ed4 with SMTP id
+ 98e67ed59e1d1-2c4dbb43e3emr2911459a91.36.1718369946022; Fri, 14 Jun 2024
+ 05:59:06 -0700 (PDT)
+MIME-Version: 1.0
+From: yu ling <143307lingyu@gmail.com>
+Date: Fri, 14 Jun 2024 20:58:55 +0800
+Message-ID: <CA+Ps_6ArwOZ3PL5L9tVrCfkpSdQM_cwbYSbp0V+1jwmQuD36_g@mail.gmail.com>
+Subject: =?UTF-8?B?5oiR5b6I5oOz5L2g?=
+To: yzym_143307lingyu@163.com
+Content-Type: multipart/alternative; boundary="00000000000039bb79061ad92e3a"
+X-CM-TRANSID:_____wD3f3KaPmxmfdIhAA--.22489S3
+Authentication-Results: gzga-mx-mta-g4-7; spf=pass smtp.mail=143307lin
+	gyu@gmail.com; dkim=pass header.i=@gmail.com
+X-Coremail-Antispam: 1Uf129KBjDUn29KB7ZKAUJUUUUU529EdanIXcx71UUUUU7v73
+	VFW2AGmfu7bjvjm3AaLaJ3UbIYCTnIWIevJa73UjIFyTuYvjxUx7KIUUUUU
+
+--00000000000039bb79061ad92e3a
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: base64
+
+5L2g6L+Y5aW95ZCX77yfDQo=
+--00000000000039bb79061ad92e3a
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: base64
+
+PGRpdiBkaXI9Imx0ciI+5L2g6L+Y5aW95ZCX77yfPC9kaXY+DQo=
+--00000000000039bb79061ad92e3a--
