@@ -50,6 +50,7 @@ contract WalletFactory {
     ) external returns (Wallet) {
         // Get the counterfactual address
         address addr = getAddress(owner, salt, commitment);
+        console.log("Creating account at address:", addr);
         // Check if the code at the counterfactual address is non-empty
         uint256 codeSize = addr.code.length;
         if (codeSize > 0) {
@@ -70,19 +71,19 @@ contract WalletFactory {
             walletInit
         );
         // Return the newly deployed Wallet
-        console.log("wallet:");
+        console.log("wallet:",address(proxy));
 
         return Wallet(payable(address(proxy)));
     }
 
-    function create(
-        address owner,
-        uint256 salt
-    ) external returns (Wallet) {
-        console.log("create");
-        console.log("owner:", owner);
-        console.log("salt:", salt);
+    // function create(
+    //     address owner,
+    //     uint256 salt
+    // ) external returns (Wallet) {
+    //     console.log("create");
+    //     console.log("owner:", owner);
+    //     console.log("salt:", salt);
 
-        return walletImplementation;
-    }
+    //     return walletImplementation;
+    // }
 }

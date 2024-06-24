@@ -121,6 +121,7 @@ contract walletTest is Test {
     //         myToken.mint(alice, 200 ether);
     //         wallet.addDeposit{value: 1 ether}();
     //         myToken.transfer(address(wallet), 20 ether);
+
     //         // myToken.approve(address(wallet), 20 ether);
     //         PackedUserOperation[] memory ops = new PackedUserOperation[](1);
     //         ops[0] = puo;
@@ -167,21 +168,18 @@ contract walletTest is Test {
         vm.startPrank(alice);
         {
             uint256[] memory values = new uint256[](1);
-            values[0] = getSalt("2865755738@qq.com");
+            values[0] = getSalt("alice");
             // values[0] = 12160266183512595673888722153253610585066875951680911826333493782620438974488;
             console.log("uint256:", values[0]);
 
             PedersenCommitment.Commitment[] memory commitments = pedersenCommitment.generateCommitments(values);
             bytes memory commitment = encodeCommitment(commitments[0]);
             bytes memory encodedFunctionData = abi.encodeWithSignature(
-               "createAccount(address,uint256,bytes)",
+               "createAccount(address,uint256,bytes)", 
                 alice,
                 values[0],
                 commitment
             );
-
-            // address wallet = address(walletFactory.createAccount(alice,values[0],commitments[0]));
-            // console.log("wallet:",wallet);
 
             address addr = walletFactory.getAddress(alice,getSalt("alice"),commitment);
             console.log("wallet address:", addr);
@@ -191,12 +189,48 @@ contract walletTest is Test {
             (bool callsuccess, ) = address(entryPoint).call{value:1 ether}(payload);
             console.log("call success:",callsuccess);
 
-            (bool success, bytes memory result) = address(walletFactory).call{gas:10000000}(encodedFunctionData);
-            console.log("success:",success);
+            // (bool success, bytes memory result) = address(walletFactory).call{gas:10000000}(encodedFunctionData);
+            // console.log("success:",success);
+            address term = 0xB71aa8d44E43D8a28E64fcBd6b651e0dbc0bdb4E;
 
         // 将地址和编码函数数据拼接成一个字节数组
-        bytes memory initCode = abi.encodePacked(walletFactory, encodedFunctionData);
+        bytes memory initCode = abi.encodePacked(address(walletFactory), encodedFunctionData);
+        // bytes memory initCode = 0xb71aa8d44e43d8a28e64fcbd6b651e0dbc0bdb4eef67dc6900000000000000000000000042fab67fa18cb0c162e0854f530c18e3969277cd60a73bfb121a98fb6b52dfb29eb0defd76b60065b8cf07902baf28c167d24daf000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000000000004000000000000000005594b4dd80bc701f45daaf98250091fd2b648641431631af000000000000000000000000000000000000000000000000000000000000003a31303632393333323339393638333233393530313631393831393136373039363931313730383432343534373733363538343535323038383131000000000000;
         console.log("initCode:",bytesToHexString(initCode));
+
+        uint256 verificationGasLimit = 1000000; // 示例值
+        uint256 callGasLimit = 2000000; // 示例值
+        bytes32 _accountGasLimits = (bytes32(verificationGasLimit) << 128) |
+        bytes32(callGasLimit);
+
+        uint256 maxPriorityFeePerGas = 1000000; // 示例值
+        uint256 maxFeePerGas = 2000000; // 示例值
+        bytes32 _gasFees = (bytes32(maxPriorityFeePerGas) << 128) |
+        bytes32(maxFeePerGas);
+
+        PackedUserOperation memory puo = PackedUserOperation({
+            sender: address(addr),
+            nonce: 0,
+            initCode: initCode,
+            callData: "",
+            // callData:abi.encodeWithSignature("execute()"),
+            accountGasLimits: _accountGasLimits,
+            preVerificationGas: 10000000000,
+            gasFees: _gasFees,
+            paymasterAndData: "",
+            signature: "0x"
+        });
+
+        bytes32 puohash = entryPoint.getUserOpHash(puo);
+        console.log("puohash:",uint(puohash));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", puohash)));
+        bytes memory sig = abi.encodePacked(r, s, v);
+        puo.signature = sig;
+
+        PackedUserOperation[] memory ops = new PackedUserOperation[](1);
+        ops[0] = puo;
+
+        entryPoint.handleOps(ops, payable(admin));
 
         // entryPoint.getSenderAddress(initCode);
         // console.log("sender:",sender);

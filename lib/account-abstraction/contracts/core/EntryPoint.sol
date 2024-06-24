@@ -442,11 +442,14 @@ contract EntryPoint is IEntryPoint, StakeManager, NonceManager, ReentrancyGuard,
     ) internal {
         if (initCode.length != 0) {
             address sender = opInfo.mUserOp.sender;
+            
             if (sender.code.length != 0)
                 revert FailedOp(opIndex, "AA10 sender already constructed");
             address sender1 = senderCreator().createSender{
                 gas: opInfo.mUserOp.verificationGasLimit
             }(initCode);
+            console.log("sender1:",sender1);
+            console.log("sender:",sender);
             if (sender1 == address(0))
                 revert FailedOp(opIndex, "AA13 initCode failed or OOG");
             if (sender1 != sender)

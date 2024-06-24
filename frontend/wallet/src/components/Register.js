@@ -37,8 +37,8 @@ function Register() {
       console.log("walletAddress:", walletAddress);
 
       const initCode = await createAccount(wallet.address, salt, commitment);
-      const _accountGasLimits = encodeGas(100000, 200000);
-      const _gasFees = encodeGas(100000, 200000);
+      const _accountGasLimits = encodeGas(1000000, 2000000);
+      const _gasFees = encodeGas(1000000, 2000000);
 
       const puo = await createPackedUserOperation(walletAddress, initCode, "", _accountGasLimits, 1000000, _gasFees, "", "0x");
       console.log("puo:", puo);

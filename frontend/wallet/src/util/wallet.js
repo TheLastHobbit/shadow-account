@@ -31,15 +31,15 @@ export async function createWallet() {
 
 // 创建钱包所需要的initcode
 export async function createAccount(owner, salt, emailcommitment) {
-    let initCode =
-        FACTORY_ADDRESS +
-        factory.interface
-            .encodeFunctionData("createAccount", [
-                owner,
-                salt,
-                emailcommitment
-            ])
-            .slice(2);
+    console.log("owner:",owner);
+    const encodedFunctionData = factory.interface.encodeFunctionData("createAccount", [
+        owner,
+        salt,
+        emailcommitment
+    ]);
+    console.log("encodedFunctionData: " + encodedFunctionData);
+            // 将地址和函数编码数据合并
+    const initCode = ethers.utils.hexConcat([FACTORY_ADDRESS, encodedFunctionData]);
     console.log("initCode: " + initCode);
     return initCode;
 }
@@ -153,9 +153,52 @@ const packedUserOperation = {
     signature: ''                // 签名
 };
 
-// export async function getWalletBalance(wallet,address) {
-//     return wallet.getBalance(address);
-// }
+export async function getERC20Balance(walletAddress, tokenAddress) {
+    try {
+      // ERC20 代币的 ABI（只包含我们需要的 balanceOf 函数）
+      const minABI = [
+        {
+          "constant":true,
+          "inputs":[{"name":"_owner","type":"address"}],
+          "name":"balanceOf",
+          "outputs":[{"name":"balance","type":"uint256"}],
+          "type":"function"
+        }
+      ];
+  
+      // 创建合约实例
+      const contract = new ethers.Contract(tokenAddress, minABI, provider);
+  
+      // 调用 balanceOf 函数
+      const balance = await contract.balanceOf(walletAddress);
+  
+      // 获取代币的小数位数
+      const decimals = await contract.decimals();
+  
+      // 将余额转换为易读格式
+      const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+  
+      return formattedBalance;
+    } catch (error) {
+      console.error('Error fetching ERC20 balance:', error);
+      throw error;
+    }
+  }
+
+export async function getETHBalance(walletAddress) {
+    try {
+      // 获取余额（返回值是 BigNumber 类型）
+      const balanceWei = await provider.getBalance(walletAddress);
+  
+      // 将余额从 Wei 转换为 ETH，并格式化为字符串
+      const balanceEth = ethers.utils.formatEther(balanceWei);
+  
+      return balanceEth;
+    } catch (error) {
+      console.error('Error fetching ETH balance:', error);
+      throw error;
+    }
+  }
 
 
 
