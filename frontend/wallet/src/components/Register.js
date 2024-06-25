@@ -13,6 +13,7 @@ function Register() {
   const [passport, setPassport] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
+  const [nickname, setNickname] = useState('');
   const [code, setCode] = useState('');
   const [message, setMessage] = useState('');
 
@@ -31,7 +32,7 @@ function Register() {
     e.preventDefault();
     // 处理注册逻辑，请求验证码
     console.log('Registering with:', passport, password);
-    const response = await axios.post('http://127.0.0.1:8000/user/sign-up', { passport, password, password2 });
+    const response = await axios.post('http://127.0.0.1:8000/user/sign-up', { passport, password, password2, nickname });
     setMessage(response.data.message);
     console.log(response);
     console.log('success')
@@ -69,13 +70,17 @@ function Register() {
       console.log("updatedPuo:", updatedPuo);
       const response = await axios.post('http://127.0.0.1:8000/user/register', { passport, password, code });
       setMessage(response.data.message);
-      const user = response.data.data;
+      const user = {
+        passport: passport,
+        nickname: nickname,
+        walletAddress: walletAddress
+      };
       console.log(response);
       console.log('success')
-      if(response.status == 200){
-        message.success('注册成功,你的钱包地址为',walletAddress);
+      if(response.data.code == 0){
+        console.log('注册成功,你的钱包地址为',walletAddress);
         memoryUser.user = user;
-        memoryUser.walletAddress = walletAddress;
+        console.log(memoryUser.user);
         storage.saveUser(user);
         window.location.href = '/login';
       }
@@ -94,6 +99,10 @@ function Register() {
           <div>
             <label>Email:</label>
             <input type="email" value={passport} onChange={(e) => setPassport(e.target.value)} />
+          </div>
+          <div>
+            <label>NickName:</label>
+            <input type="input" value={nickname} onChange={(e) => setNickname(e.target.value)} />
           </div>
           <div>
             <label>Password:</label>

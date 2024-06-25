@@ -20,9 +20,14 @@ function Login() {
 
             console.log(response.data);
             // 登录成功后，可以跳转到其他页面，例如首页
-            setMessage('登录成功')
-            // localStorage.setItem('token', response.data.token);
-            navigate('/home');
+            if(response.data.code == 0){
+                setMessage('登录成功')
+                // localStorage.setItem('token', response.data.token);
+                navigate('/home');
+            }else{
+                setMessage('登录失败:'+response.data.message)
+                console.error(response.data);
+            }
         }catch(error){
             console.error(error);
             setMessage('登录失败: 服务器错误');

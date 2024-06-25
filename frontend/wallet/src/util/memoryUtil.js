@@ -4,7 +4,6 @@
 
 const memoryUser = {
     user: {},
-    walletAddress: ''
 }
 
 export default memoryUser

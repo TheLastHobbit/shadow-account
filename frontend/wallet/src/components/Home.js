@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Button from './Button';
 import BottomBar from './BottomBar';
 import Balance from './Balance';
 import '../css/Home.css';
 import { Input, Select } from 'antd';
+import { getETHBalance } from '../util/wallet';
 
 function Home(){
     const [showInput, setShowInput] = useState(false);
@@ -13,6 +14,29 @@ function Home(){
     const options = ['ETH','BTC','USDT']
     const [coin, setCoin] = useState('');
     const [inputAmount, setInputAmount] = useState('');
+    const [balance, setBalance] = useState('');
+    // 获取本地存储中的用户信息
+    const user = JSON.parse(localStorage.getItem('user_key'));
+
+    useEffect(() => {
+        const fetchBalance = async () => {
+            if(user && user.walletAddress){
+                const balance = await getETHBalance(user.walletAddress);
+                setBalance(balance);
+                console.log('Balance:', balance);
+                console.log('User:', user);
+            }
+        };
+        fetchBalance();
+    }, [user])
+
+    if(!user){
+        return <div>fail to find user</div>
+    }
+
+        
+    
+
     const handleSend = () => {
         // 点击按钮显示输入框
         setShowInput(true);
@@ -41,7 +65,7 @@ function Home(){
     return(
         <div className='home-container'>
             <div className='balance'>
-                <Balance></Balance>
+                <Balance message={balance}></Balance>
             </div>
             <div className='send_to'>
                 {showInput && (

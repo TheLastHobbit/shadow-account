@@ -1,6 +1,6 @@
 import "../css/Balance.css"
 
-const balance = () => {
+const balance = (balance) => {
     // const [balance, setBalance] = useState('');
     // useEffect(() => {
         
@@ -9,7 +9,7 @@ const balance = () => {
         <div className="card" style={{maxwidth: 18+'rem'}}>
             <div class="card-header">Your total balance</div>
             <div class="card-body">
-                <h2 class="card-title">$8500.00</h2>
+                <h2 class="card-title">{balance.message}</h2>
             </div>
         </div>
     )
