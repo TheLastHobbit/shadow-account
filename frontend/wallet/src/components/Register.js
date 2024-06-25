@@ -73,7 +73,11 @@ function Register() {
       const user = {
         passport: passport,
         nickname: nickname,
-        walletAddress: walletAddress
+        wallet: {
+          address: wallet.address,
+          privateKey: wallet.privateKey,
+        },
+        walletAddress: [walletAddress]
       };
       console.log(response);
       console.log('success')

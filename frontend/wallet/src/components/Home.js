@@ -5,7 +5,7 @@ import BottomBar from './BottomBar';
 import Balance from './Balance';
 import '../css/Home.css';
 import { Input, Select } from 'antd';
-import { getETHBalance } from '../util/wallet';
+
 
 function Home(){
     const [showInput, setShowInput] = useState(false);
@@ -14,27 +14,6 @@ function Home(){
     const options = ['ETH','BTC','USDT']
     const [coin, setCoin] = useState('');
     const [inputAmount, setInputAmount] = useState('');
-    const [balance, setBalance] = useState('');
-    // 获取本地存储中的用户信息
-    const user = JSON.parse(localStorage.getItem('user_key'));
-
-    useEffect(() => {
-        const fetchBalance = async () => {
-            if(user && user.walletAddress){
-                const balance = await getETHBalance(user.walletAddress);
-                setBalance(balance);
-                console.log('Balance:', balance);
-                console.log('User:', user);
-            }
-        };
-        fetchBalance();
-    }, [user])
-
-    if(!user){
-        return <div>fail to find user</div>
-    }
-
-        
     
 
     const handleSend = () => {
@@ -65,7 +44,7 @@ function Home(){
     return(
         <div className='home-container'>
             <div className='balance'>
-                <Balance message={balance}></Balance>
+                <Balance></Balance>
             </div>
             <div className='send_to'>
                 {showInput && (
