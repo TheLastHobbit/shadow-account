@@ -1,5 +1,5 @@
 import React,{ useEffect, useState } from 'react';
-import { Route, BrowserRouter as Router, Routes, Switch } from 'react-router-dom';
+import { Route, BrowserRouter as Router, Routes, Switch, Navigate } from 'react-router-dom';
 import logo from './logo.svg';
 import './App.css';
 import BottomBar from "./components/BottomBar"
@@ -17,6 +17,7 @@ import {
 } from "@alchemy/aa-core";
 import { http } from "viem";
 import { sepolia } from "@alchemy/aa-core";
+import memoryUser from './util/memoryUtil';
 
 
 /*
@@ -24,7 +25,10 @@ import { sepolia } from "@alchemy/aa-core";
 */
 
 function App() {
-  
+  //如果用户已登录，则重定向到首页
+  if (memoryUser.user && memoryUser.user.passport) {
+    return <Navigate to="/home" />;
+  }
   return (
     <div className="App">
       <Router>

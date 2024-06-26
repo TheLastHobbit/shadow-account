@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Button from './Button';
 import BottomBar from './BottomBar';
 import Balance from './Balance';
 import '../css/Home.css';
 import { Input, Select } from 'antd';
+
 
 function Home(){
     const [showInput, setShowInput] = useState(false);
@@ -13,6 +14,8 @@ function Home(){
     const options = ['ETH','BTC','USDT']
     const [coin, setCoin] = useState('');
     const [inputAmount, setInputAmount] = useState('');
+    
+
     const handleSend = () => {
         // 点击按钮显示输入框
         setShowInput(true);

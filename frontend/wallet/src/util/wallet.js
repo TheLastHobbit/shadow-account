@@ -137,8 +137,22 @@ export async function getWalletAddress(owner, salt, emailcommitment) {
 }
 
 export async function signUOP(wallet, uopHash) {
-    let signature = await wallet.signMessage(ethers.utils.arrayify(uopHash));
-    return signature;
+    try {
+        // 确保wallet对象存在
+        if (!wallet || typeof wallet.signMessage !== 'function') {
+            throw new Error('Invalid wallet object or wallet does not support signMessage method');
+        }
+
+        console.log('Signing UOP hash:', uopHash);
+
+        // 使用wallet对象直接签名消息哈希
+        const signature = await wallet.signMessage(ethers.utils.arrayify(uopHash));
+        console.log('Generated signature:', signature);
+        return signature;
+    } catch (error) {
+        console.error('Error signing UOP:', error);
+        throw error;
+    }
 }
 
 const packedUserOperation = {
