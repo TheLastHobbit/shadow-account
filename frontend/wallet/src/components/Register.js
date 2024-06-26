@@ -40,7 +40,7 @@ function Register() {
       const _accountGasLimits = encodeGas(1000000, 2000000);
       const _gasFees = encodeGas(1000000, 2000000);
 
-      const puo = await createPackedUserOperation(walletAddress, initCode, "", _accountGasLimits, 1000000, _gasFees, "", "0x");
+      const puo = await createPackedUserOperation(walletAddress, initCode, "", _accountGasLimits, 100000000, _gasFees, "", "0x");
       console.log("puo:", puo);
 
       const userOpHash = await getHash(puo);
