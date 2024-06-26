@@ -77,7 +77,8 @@ function Register() {
           address: wallet.address,
           privateKey: wallet.privateKey,
         },
-        walletAddress: [walletAddress]
+        walletAddress: [walletAddress],
+        guardian:[]
       };
       console.log(response);
       console.log('success')
