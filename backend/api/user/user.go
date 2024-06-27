@@ -26,4 +26,5 @@ type IUserV1 interface {
 	ResetRegister(cxt context.Context, req *v1.ResetRegisterReq) (res *v1.ResetRegisterRes, err error)
 	DeleteShare(cxt context.Context, req *v1.DeleteShareReq) (res *v1.DeleteShareRes, err error)
 	ChangeNickname(cxt context.Context, req *v1.ChangeNicknameReq) (res *v1.ChangeNicknameRes, err error)
+	GetMessage(cxt context.Context, req *v1.GetMessageReq) (res *v1.GetMessageRes, err error)
 }
