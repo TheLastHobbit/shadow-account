@@ -61,6 +61,7 @@ function Login() {
                 </div>
             </form>
             {message && <p>{message}</p>}
+            <p>Forget password?<Link to='/reset'>Reset</Link></p>
             <p>Don't have an account? <Link to="/register">Register</Link></p>
             </div> 
         </div>

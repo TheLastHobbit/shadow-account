@@ -4,6 +4,7 @@ import logo from './logo.svg';
 import './App.css';
 import BottomBar from "./components/BottomBar"
 import Login from './components/Login';
+import Reset from './components/Reset';
 import Register from './components/Register';
 import Start from './components/Start';
 import Home from './components/Home';
@@ -36,6 +37,7 @@ function App() {
           <Routes>
             <Route path='/login' exact element={<Login />} />
             <Route path='/register' element={<Register />} />
+            <Route path='/reset' element={<Reset />} />
             <Route path='/home' element={<Home />} />
             <Route path='/warning' element={<Warn />} />
             <Route path='/my' element={<My />} />
