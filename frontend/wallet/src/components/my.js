@@ -7,6 +7,7 @@ import { UserOutlined } from '@ant-design/icons';
 import storage from '../util/storageUtils.js';
 import Balance from './Balance';
 import axios from 'axios';
+import '../css/My.css'
 
 function My(){
     const count = 3;
@@ -58,22 +59,28 @@ function My(){
             {showForm && (
               <div style={{marginTop: 12}}>
                 <Input 
+                  className='add-email'
                   type="email" 
                   placeholder='Enter the email'
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                 />
-                <Button onClick={handleAddEmail}>Add</Button>
+                <div>
+                <Button onClick={handleAddEmail} className='add-email-button'>Add</Button>
+                </div>
               </div>
             )}
             </div>
+            <div className='your-guardian-emails'>
             <p3>Your Guardian emials</p3>
-            
+            </div>
+            <div className='email-list'>
             <ul>
               {emails.map((email,index) => (
                 <li key={index}>{email}</li>
               ))}
             </ul>
+            </div>
             
             <BottomBar></BottomBar>
 

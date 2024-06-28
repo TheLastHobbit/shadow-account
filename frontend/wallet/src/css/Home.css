@@ -13,6 +13,7 @@
     width: 100%;
     height: 300px;
     display: flex;
+    padding: 10px;
     justify-content: center;
 }
 
