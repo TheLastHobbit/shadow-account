@@ -13,6 +13,16 @@ function Reset(){
     const [password2, setPassword2] = useState('');
     const [code, setCode] = useState('');
     const nickname = user.nickname;
+
+    function toString(privateKeyObj){
+        const privateKeyArray = Object.values(privateKeyObj);
+        const privateKeyHex = privateKeyArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+        console.log("privateKeyHex:", privateKeyHex);
+        const privateKeyString = '0x' + privateKeyHex;
+        console.log("privateKeyString:", privateKeyString);
+        return privateKeyString;
+    }
+
     const handleSendCode = async(e) => {
         e.preventDefault();
         // 发送验证码
@@ -24,6 +34,7 @@ function Reset(){
         e.preventDefault();
         const response = await axios.post('http://127.0.0.1:8000/user/reset-register', {passport, password, code, nickname});
         if(response.data.code == 0){
+            //to do slice privare key
             console.log(response.data.message);
             alert('Reset successfully!');
             navigate('/login');

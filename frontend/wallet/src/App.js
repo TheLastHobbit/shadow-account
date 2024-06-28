@@ -10,6 +10,7 @@ import Start from './components/Start';
 import Home from './components/Home';
 import Warn from './components/Warn';
 import My from './components/my'
+import Send from './components/Send';
 import {
   getVersion060EntryPoint,
   toSmartContractAccount,
@@ -40,6 +41,7 @@ function App() {
             <Route path='/warning' element={<Warn />} />
             <Route path='/my' element={<My />} />
             <Route path='/' element={<Start/>} />
+            <Route path='/send' element={<Send />} />
           </Routes>
         </div>
       </Router>

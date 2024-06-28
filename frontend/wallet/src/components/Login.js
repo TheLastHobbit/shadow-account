@@ -36,6 +36,12 @@ function Login() {
         
     };
 
+    const handleReset = async() => {
+        // 处理重置密码逻辑
+        // const response = await axios.post('http://127.0.0.1:8000/user/social-recovery', { passport, password });
+        console.log('Resetting password...');
+    };
+
     return (
         <div className='container'>
             <div className='container-inner'>
@@ -61,7 +67,7 @@ function Login() {
                 </Button>
                 </div>
             {message && <p>{message}</p>}
-            <p>Forget password?<Link to='/reset'>Reset</Link></p>
+            <p>Forget password?<Link to='/send' onClick={handleReset}>Reset</Link></p>
             <p>Don't have an account? <Link to="/register">Register</Link></p>
             </div> 
         </div>

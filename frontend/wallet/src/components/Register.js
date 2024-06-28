@@ -8,6 +8,7 @@ import {Input,Form} from 'antd';
 import storage from '../util/storageUtils.js';
 import memoryUser from '../util/memoryUtil.js';
 import '../css/Login.css'
+import '../css/Register.css'
 import { encrypt } from '../util/shamir.js';
 
 
@@ -117,7 +118,7 @@ function Register() {
   return (
     <div className='container'>
       <div className='container-inner'>
-        <h2 className='Register'>Register</h2>
+          <h2 className='Register'>Register</h2>
           <div className='container-email'>
             <Input 
               addonBefore='邮箱'
@@ -140,13 +141,13 @@ function Register() {
               type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} />
           </div>
           <div className='container-captcha'>
-            <div className='captcha-input'>
+            <div className='input'>
             <Input 
             addonBefore='验证码'
             value={code} onChange={(e) => setCode(e.target.value)}/>
             </div>
-            <div className='captcha-img'>
-            <Button onClick={handleSubmit}>send</Button>
+            <div className='div-captcha'>
+            <Button onClick={handleSubmit} className='button'>send</Button>
             </div>
           </div>
           <div className='login-button'>
