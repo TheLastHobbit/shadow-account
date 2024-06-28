@@ -7,6 +7,7 @@ import axios from 'axios';
 import {Input,Form} from 'antd';
 import storage from '../util/storageUtils.js';
 import memoryUser from '../util/memoryUtil.js';
+import '../css/Login.css'
 import { encrypt } from '../util/shamir.js';
 
 
@@ -116,34 +117,45 @@ function Register() {
   return (
     <div className='container'>
       <div className='container-inner'>
-        <h2>Register</h2>
-        <form>
-          <div>
-            <label>Email:</label>
-            <input type="email" value={passport} onChange={(e) => setPassport(e.target.value)} />
+        <h2 className='Register'>Register</h2>
+          <div className='container-email'>
+            <Input 
+              addonBefore='邮箱'
+              type="email" value={passport} onChange={(e) => setPassport(e.target.value)} />
           </div>
-          <div>
-            <label>NickName:</label>
-            <input type="input" value={nickname} onChange={(e) => setNickname(e.target.value)} />
+          <div className='container-nickname'>
+            <Input 
+              addonBefore='昵称'
+              type="input" value={nickname} onChange={(e) => setNickname(e.target.value)} />
           </div>
-          <div>
-            <label>Password:</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <div className='container-password'>
+            <Input 
+              addonBefore='密码'
+              type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+
           </div>
-          <div>
-            <label>Password2:</label>
-            <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} />
+          <div className='container-password2'>
+            <Input 
+              addonBefore='确认密码'
+              type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} />
           </div>
-          <Form.Item label="验证码" className='container-captcha' value={code} onChange={(e) => setCode(e.target.value)}>
-            <Input/>
+          <div className='container-captcha'>
+            <div className='captcha-input'>
+            <Input 
+            addonBefore='验证码'
+            value={code} onChange={(e) => setCode(e.target.value)}/>
+            </div>
+            <div className='captcha-img'>
             <Button onClick={handleSubmit}>send</Button>
-          </Form.Item>
-          <Button onClick={handleConfirm} className='login-button'>
+            </div>
+          </div>
+          <div className='login-button'>
+          <Button onClick={handleConfirm} >
             Confirm
           </Button>
-        </form>
+          </div>
         {message && <p>{message}</p>}
-        <p>Already have an account? <Link to="/login">Login</Link></p>
+        <p className='login-link'>Already have an account? <Link to="/login">Login</Link></p>
       </div>
     </div>
   );

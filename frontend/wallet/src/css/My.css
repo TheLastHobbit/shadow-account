@@ -1,11 +1,5 @@
-.add-email{
-    width: 300px;
-    margin: 10px;;
-    margin-bottom: 15px;
-}
-.your-guardian-emails{
-    margin: 10px;
-}
-.email-list{
-    align-items: center;
+.my-list{
+    width: 1000px;
+    position: absolute;
+    left: 19%;
 }
