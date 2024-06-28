@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.23;
-
+import { console,console2} from "forge-std/Test.sol";
 /**
  * Helper contract for EntryPoint, to call userOp.initCode from a "neutral" address,
  * which is explicitly not the entryPoint itself.
@@ -16,7 +16,10 @@ contract SenderCreator {
         bytes calldata initCode
     ) external returns (address sender) {
         address factory = address(bytes20(initCode[0:20]));
+        console.log("factory:",factory);
+
         bytes memory initCallData = initCode[20:];
+        // console.log("initCallData:",initCallData);
         bool success;
         /* solhint-disable no-inline-assembly */
         assembly ("memory-safe") {

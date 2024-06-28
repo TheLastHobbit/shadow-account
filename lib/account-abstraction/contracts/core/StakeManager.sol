@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import "../interfaces/IStakeManager.sol";
-
+import {Test, console} from "forge-std/Test.sol";
 /* solhint-disable avoid-low-level-calls */
 /* solhint-disable not-rely-on-time */
 
@@ -61,6 +61,7 @@ abstract contract StakeManager is IStakeManager {
      * @param account - The account to add to.
      */
     function depositTo(address account) public virtual payable {
+        console.log("depositTo", account, msg.value);
         uint256 newDeposit = _incrementDeposit(account, msg.value);
         emit Deposited(account, newDeposit);
     }

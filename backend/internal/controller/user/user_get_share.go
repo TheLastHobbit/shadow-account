@@ -14,9 +14,9 @@ func (c *ControllerV1) GetShare(ctx context.Context, req *v1.GetShareReq) (res *
 	passport := service.Session().GetUser(ctx).Passport
 	// 获取当前用户的分享
 	md := dao.Shares.Ctx(ctx)
-	data, err := md.Where("passport", passport).All()
+	data, err := md.Where("passport", passport).Where("index", req.Index).All()
 	if len(data) == 0 {
-		err = gerror.New("have no share")
+		err = gerror.New("share not found")
 		return
 	}
 	// r := g.RequestFromCtx(ctx)

@@ -12,35 +12,79 @@
 }
 .container .container-inner{
     position: absolute;
-    top: 20%;
+    top: 15%;
     left: 34%;
 
 }
-.container.container-inner.email{
-    height: 40px;
-    width: 300px;
-}
-.container.container-inner.password{
-    height: 40px;
-    width: 300px;
 
+.container .container-inner .Register{
+    left:34%;
+    width: 300px;
 }
+
 .container .container-inner .container-email{
     width: 300px;
     height: 40px;
     border-radius: 20px;
-    padding: 10px;
+    padding: 5px;
+    position:relative;
+}
+.container .container-inner .container-nickname{
+    width: 300px;
+    height: 40px;
+    border-radius: 20px;
+    padding: 5px;
     position:relative;
 }
 .container .container-inner .container-password{
-    height: 50px;
+    width: 300px;
+    height: 40px;
+    border-radius: 20px;
+    padding: 5px;
     position:relative;
 }
-.container.container-inner.container-captcha{
-    height: 50px;
+.container .container-inner .container-password2{
+    width: 300px;
+    height: 40px;
+    border-radius: 20px;
+    padding: 5px;
     position:relative;
+}
+.container.container-inner .container-captcha{
+    width: 300px;
+    height: 40px;
+    padding:5px;
+    margin: 15px;
+    position:relative;
+}
+.container.container-inner .container-captcha .captcha-input{
+    width: 300px;
+    height: 40px;
+    padding: 25px;
+    margin: 15px;
+    top: 10%;
+    position:relative;
+
+}
+.container.container-inner .container-captcha .captcha-img{
+    width: 300px;
+    height: 50px;
+    padding: 25px;
+    margin: 15px;
+    top: 10%;
+    position:relative;
+
+}
+.container .container-inner .login-link{
+    left:34%;
+    width: 300px;
 }
 .container .container-inner .container-button{
+    left:32%;
     height: 50px;
     position: relative;
+}
+.container .container-inner .login-button{
+    left:30%;
+    width: 300px;
 }

@@ -25,7 +25,6 @@ func (c *ControllerV1) ResetPassword(ctx context.Context, req *v1.ResetPasswordR
 	if !ok {
 		// 生成随机验证码
 		code = verification.GenValidateCode(6)
-		Verification.NewVerificationCode(req.Passport, code)
 	}
 	fmt.Println("验证码：", code)
 	fmt.Println(req.Passport)
@@ -39,6 +38,7 @@ func (c *ControllerV1) ResetPassword(ctx context.Context, req *v1.ResetPasswordR
 	if err != nil {
 		return
 	}
+	Verification.NewVerificationCode(req.Passport, code)
 	res = &v1.ResetPasswordRes{
 		OK: true,
 	}

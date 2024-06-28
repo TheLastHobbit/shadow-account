@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS `user`;
+DROP TABLE IF EXISTS `shares`;
+
 CREATE TABLE `user`
 (
     `id`        int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'User ID',
@@ -12,6 +15,7 @@ CREATE TABLE `user`
 CREATE TABLE `shares`
 (
     `id`        int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Share ID',
+    `index`     int(10) unsigned NOT NULL COMMENT 'Share Index',
     `passport`  varchar(45) NOT NULL COMMENT 'User Passport',
     `share`   varchar(64) NOT NULL COMMENT 'Share Content',
     `create_at` datetime DEFAULT NULL COMMENT 'Created Time',

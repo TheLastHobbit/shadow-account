@@ -7,7 +7,7 @@ import (
 
 type IEmail interface {
 	SendEmail(ctx context.Context, input model.EmailSendInput) (err error)
-	GetEmail(ctx context.Context) []byte
+	GetEmail(ctx context.Context) (err error)
 }
 
 var localEmail IEmail

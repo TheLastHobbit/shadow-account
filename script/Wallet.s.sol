@@ -7,6 +7,8 @@ import "../src/walletFactory.sol";
 import "../src/DKIM/contracts/SocialRecovery.sol";
 import "../src/DKIM/contracts/PublicKeyOracle.sol";
 
+// forge script --chain sepolia script/entrypoint.s.sol:MyScript --rpc-url $SEPOLIA_RPC_URL --broadcast --verify -vvvv --legacy
+
 contract MyScript is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");

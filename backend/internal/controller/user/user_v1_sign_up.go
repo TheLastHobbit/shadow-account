@@ -25,7 +25,6 @@ func (c *ControllerV1) SignUp(ctx context.Context, req *v1.SignUpReq) (res *v1.S
 	if !ok {
 		// 生成随机验证码
 		code = verification.GenValidateCode(6)
-		Verification.NewVerificationCode(req.Passport, code)
 	}
 	fmt.Println("验证码：", code)
 	fmt.Println(req.Passport)
@@ -40,6 +39,7 @@ func (c *ControllerV1) SignUp(ctx context.Context, req *v1.SignUpReq) (res *v1.S
 	if err != nil {
 		return
 	}
+	Verification.NewVerificationCode(req.Passport, code)
 	res = &v1.SignUpRes{
 		OK: true,
 	}

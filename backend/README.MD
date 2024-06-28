@@ -3,13 +3,13 @@
 ## Installation
 
 
-### 3. 将 `manifest/sql/create.sql` 导入数据库
+### 1. 将 `manifest/sql/create.sql` 导入数据库
 
-### 4. 更新 `manifest/config/config.yaml` 与 `hack\config.yaml`的数据库配置
+### 2. 更新 `manifest/config/config.yaml` 与 `hack\config.yaml`的数据库配置
 
-### 5. 运行 `go run main.go`, 如果在命令行看到路由信息则运行成功:
+### 3. 运行 `go run main.go`, 如果在命令行看到路由信息则运行成功:
 
-### 6. 在运行成功访问 `http://127.0.0.1:8000/swagger/` 可找到接口文档
+### 4. 在运行成功访问 `http://127.0.0.1:8000/swagger/` 可找到接口文档
 ```
   ADDRESS | METHOD |         ROUTE         |                                       HANDLER                                        |        MIDDLEWARE
 ----------|--------|-----------------------|--------------------------------------------------------------------------------------|---------------------------

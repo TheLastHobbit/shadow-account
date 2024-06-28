@@ -63,14 +63,9 @@
         "inputs": [],
         "outputs": [
             {
-                "name": "m",
-                "type": "string",
-                "internalType": "string"
-            },
-            {
-                "name": "r",
-                "type": "uint256",
-                "internalType": "uint256"
+                "name": "",
+                "type": "bytes",
+                "internalType": "bytes"
             }
         ],
         "stateMutability": "view"
@@ -338,20 +333,8 @@
             },
             {
                 "name": "_commitment",
-                "type": "tuple",
-                "internalType": "struct PedersenCommitment.Commitment",
-                "components": [
-                    {
-                        "name": "m",
-                        "type": "string",
-                        "internalType": "string"
-                    },
-                    {
-                        "name": "r",
-                        "type": "uint256",
-                        "internalType": "uint256"
-                    }
-                ]
+                "type": "bytes",
+                "internalType": "bytes"
             }
         ],
         "outputs": [],
@@ -579,20 +562,8 @@
         "inputs": [
             {
                 "name": "_commitment",
-                "type": "tuple",
-                "internalType": "struct PedersenCommitment.Commitment",
-                "components": [
-                    {
-                        "name": "m",
-                        "type": "string",
-                        "internalType": "string"
-                    },
-                    {
-                        "name": "r",
-                        "type": "uint256",
-                        "internalType": "uint256"
-                    }
-                ]
+                "type": "bytes",
+                "internalType": "bytes"
             }
         ],
         "outputs": [],
@@ -849,21 +820,9 @@
             },
             {
                 "name": "commitment",
-                "type": "tuple",
+                "type": "bytes",
                 "indexed": true,
-                "internalType": "struct PedersenCommitment.Commitment",
-                "components": [
-                    {
-                        "name": "m",
-                        "type": "string",
-                        "internalType": "string"
-                    },
-                    {
-                        "name": "r",
-                        "type": "uint256",
-                        "internalType": "uint256"
-                    }
-                ]
+                "internalType": "bytes"
             }
         ],
         "anonymous": false
