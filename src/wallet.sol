@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.13;
 import "account-abstraction/core/BaseAccount.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
@@ -37,6 +37,8 @@ contract Wallet is
         address indexed owner,
         bytes indexed commitment
     );
+
+    event EthTransferred(address indexed to, uint256 amount);
 
     modifier _requireFromEntryPointOrOwner() {
         require(
@@ -80,6 +82,14 @@ contract Wallet is
         if (owner() != recoveredAddress) return 1;
         return 0;
     }
+
+    function transferEth(address payable _to, uint256 _amount) external _requireFromEntryPointOrOwner {
+    require(_amount <= address(this).balance, "Insufficient balance");
+    (bool success, ) = _to.call{value: _amount}("");
+    require(success, "ETH transfer failed");
+    emit EthTransferred(_to, _amount);
+}
+
 
     function initialize(
         address _socialRecovery,
@@ -189,6 +199,8 @@ contract Wallet is
 
         socialRecovery = ISocialRecovery(_socialRecovery);
     }
+
+
 
     function verify(
         string memory toSign,

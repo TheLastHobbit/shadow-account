@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.13;
 
 import "@ensdomains/solsha1/contracts/SHA1.sol";
 import "@ensdomains/buffer/contracts/Buffer.sol";

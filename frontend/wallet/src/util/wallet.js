@@ -24,8 +24,8 @@ const entrypoint = new ethers.Contract(ENTRYPOINT_ADDRESS, ENTRYPOINT_ABI, provi
 export async function createWallet() {
     var privateKey = ethers.utils.randomBytes(32);
     var wallet = new ethers.Wallet(privateKey, provider);
-    // console.log("私钥: " + wallet.privateKey);
-    // console.log("账号地址: " + wallet.address);
+    console.log("私钥: " + wallet.privateKey);
+    console.log("账号地址: " + wallet.address);
     return wallet;
 }
 
@@ -136,9 +136,22 @@ export async function getWalletAddress(owner, salt, emailcommitment) {
     return walletAddress;
 }
 
-export async function signUOP(wallet, uopHash) {
-    let signature = await wallet.signMessage(ethers.utils.arrayify(uopHash));
-    return signature;
+export async function signUOP(wallet,uopHash ) {
+    try {
+        // 确保wallet对象存在
+        if (!wallet || typeof wallet.signMessage !== 'function') {
+            throw new Error('Invalid wallet object or wallet does not support signMessage method');
+        }
+        console.log('Signing UOP hash:', uopHash);
+
+        // 使用wallet对象直接签名消息哈希
+        const signature = await wallet.signMessage(ethers.utils.arrayify(uopHash));
+        console.log('Generated signature:', signature);
+        return signature;
+    } catch (error) {
+        console.error('Error signing UOP:', error);
+        throw error;
+    }
 }
 
 const packedUserOperation = {
@@ -184,6 +197,11 @@ export async function getERC20Balance(walletAddress, tokenAddress) {
       throw error;
     }
   }
+
+export async function sendETHCalldata(sender, receiver, amount){
+    const callData = sender.interface.encodeFunctionData("transferEth", [receiver, amount]);
+    return callData;
+}
 
 export async function getETHBalance(walletAddress) {
     try {
