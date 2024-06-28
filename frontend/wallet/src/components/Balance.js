@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import Button from './Button';
 import { getETHBalance } from '../util/wallet';
 import storage from '../util/storageUtils.js';
+import memoryWalletAddress from '../util/memoryUtil.js';
 import { encodeCommitment,signUOP, getHash, createAccount, getCommitment, createWallet, getSalt, getWalletAddress, createPackedUserOperation } from '../util/wallet.js';
 
 const Balance = ({onChildData}) => {
@@ -32,7 +33,7 @@ const Balance = ({onChildData}) => {
 
         if (user && addresses.length > 0) {
             
-            setSelectedAddress(addresses[0]);
+            setSelectedAddress(memoryWalletAddress.walletAddress ? memoryWalletAddress.walletAddress : addresses[0]);
       
             const fetchBalance = async (address) => {
               try {
@@ -47,7 +48,7 @@ const Balance = ({onChildData}) => {
       
             fetchBalance(addresses[0]);
           }
-    }, [user, addresses]);
+    }, []);
 
     useEffect(()=>{
         const myAddress = selectedAddress;
@@ -60,7 +61,7 @@ const Balance = ({onChildData}) => {
                 const balance = await getETHBalance(address);
                 setBalance(balance);
                 console.log('Balance:', balance);
-                console.log('User:', user);
+                console.log('address:', address);
             } catch (error) {
                 console.error('Failed to fetch balance:', error);
             }
@@ -71,6 +72,11 @@ const Balance = ({onChildData}) => {
         }
     }, [selectedAddress]);
 
+    useEffect(()=>{
+        const myAddress = selectedAddress;
+        onChildData(myAddress);
+    },[onChildData])
+
     if (!user) {
         return <div>fail to find user</div>;
     }
@@ -78,24 +84,35 @@ const Balance = ({onChildData}) => {
     const handleSelectChange = (event) => {
         //address change
         setSelectedAddress(event);
+        memoryWalletAddress.walletAddress = event;
+        console.log("memoryWalletAddress:", memoryWalletAddress);
     }
 
     const handleAddNewAccount = async() => {
         //add new account
         try{
+            let salt = 0;
+            let commitment = '';
+            let walletAddress = null;
+            while (true) {
+                const passport = user.passport;
+                console.log("wallet:", wallet.address);
+                console.log("passport:", passport);
+
+                salt = await getSalt(passport);
+                const uncodecommitment = await getCommitment(passport);
+                commitment = encodeCommitment(uncodecommitment[0]);
+                // console.log("salt:", salt.toString());
+                console.log("commitment2:", commitment);
+
+                walletAddress = await getWalletAddress(wallet.address, salt, commitment);
+                console.log("walletAddress:", walletAddress);
+
+                if (!addresses.includes(walletAddress)) {
+                    break
+                }
+            }
             
-            const passport = user.passport;
-            console.log("wallet:", wallet.address);
-            console.log("passport:", passport);
-
-            const salt = await getSalt(passport);
-            const uncodecommitment = await getCommitment(passport);
-            const commitment = encodeCommitment(uncodecommitment[0]);
-            // console.log("salt:", salt.toString());
-            console.log("commitment2:", commitment);
-
-            const walletAddress = await getWalletAddress(wallet.address, salt, commitment);
-            console.log("walletAddress:", walletAddress);
 
             const initCode = await createAccount(wallet.address, salt, commitment);
             const _accountGasLimits = encodeGas(1000000, 2000000);
@@ -117,6 +134,9 @@ const Balance = ({onChildData}) => {
             user.walletAddress.push(walletAddress);
             storage.saveUser(user);
             console.log("新的账户已添加", walletAddress);
+            setSelectedAddress(walletAddress);
+            memoryWalletAddress.walletAddress = walletAddress;
+            console.log("memoryWalletAddress:", memoryWalletAddress);
         }catch (error) {
             console.error("Failed to add new account:", error);
         }

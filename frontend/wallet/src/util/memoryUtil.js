@@ -6,4 +6,8 @@ const memoryUser = {
     user: {},
 }
 
-export default memoryUser
+const memoryWalletAddress = {
+    walletAddress: '',
+}
+
+export default {memoryUser, memoryWalletAddress}
