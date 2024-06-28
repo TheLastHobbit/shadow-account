@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link,useNavigate } from 'react-router-dom';
 import Button from './Button';
 import '../css/Login.css'
-import {Input} from 'antd';
+import {Input,Form} from 'antd';
 import axios from 'axios';
 
 function Login() {
@@ -36,31 +36,38 @@ function Login() {
         
     };
 
+    const handleReset = async() => {
+        // 处理重置密码逻辑
+        // const response = await axios.post('http://127.0.0.1:8000/user/social-recovery', { passport, password });
+        console.log('Resetting password...');
+    };
+
     return (
         <div className='container'>
             <div className='container-inner'>
             <h2>Login</h2>
-            <form>
                 <div className='container-email'>
-                <label>Email:</label>
+                <label></label>
                     <Input 
+                        addonBefore="邮箱"
                         placeholder='Enter your email'
                         autoFocus/*光标自动定位到输入框 */
                         type="email" value={passport} onChange={(e) => setPassport(e.target.value)} />
                 </div>
                 <div className='container-password'>
-                    <label>Password:</label>
+                    <label></label>
                     <Input 
+                        addonBefore="密码"
                         placeholder='Enter your password'
                         type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
-                <div className='container-button'>
-                <Button onClick={handleSubmit} className='login-button'>
+                <div className='login-button'>
+                <Button onClick={handleSubmit}>
                     Login
                 </Button>
                 </div>
-            </form>
             {message && <p>{message}</p>}
+            <p>Forget password?<Link to='/send' onClick={handleReset}>Reset</Link></p>
             <p>Don't have an account? <Link to="/register">Register</Link></p>
             </div> 
         </div>

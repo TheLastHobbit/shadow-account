@@ -1,6 +1,7 @@
 const prime = 257; // 使用的素数
 
 // Encrypt function
+// n 是需要几个人，num是总的份数
 function encrypt(secret, n, num) {
     if (secret.length === 0 || n <= 0) {
         throw new Error('illegal input data');

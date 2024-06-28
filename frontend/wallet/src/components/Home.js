@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from './Button';
 import BottomBar from './BottomBar';
@@ -14,6 +14,12 @@ function Home(){
     const options = ['ETH','BTC','USDT']
     const [coin, setCoin] = useState('');
     const [inputAmount, setInputAmount] = useState('');
+    const [myAddress,setMyAddress] = useState('');
+
+    //回调函数，用于接收myAddress
+    const getMyAddress = (address) => {
+        setMyAddress(address);
+    }
     
 
     const handleSend = () => {
@@ -33,6 +39,7 @@ function Home(){
     }
     const handleConfirm = () => {
         // 处理确认按钮点击事件
+        console.log('my',myAddress);
         console.log('Send', coin, 'to:', inputAccountNumber);
         console.log('Amount:', inputAmount);
         setShowInput(false);
@@ -40,11 +47,26 @@ function Home(){
         setSelectedValue('');
         setInputAmount('');
     }
+    const [currentTime] = useState(new Date());
+    const getGreeting = () => {  
+        const hour = currentTime.getHours();  
+        if (hour < 11) {  
+          return <h1 className='greeting'>Good morning!</h1>;
+        } else if (hour >= 11 && hour < 18) {  
+          return <h1 className='greeting'>Good afternoon!</h1>;  
+        } else {  
+          return <h1 className='greeting'>Good evening!</h1>;
+        }  
+      };  
 
     return(
         <div className='home-container'>
+
+            <div>
+                {getGreeting()}
+            </div>
             <div className='balance'>
-                <Balance></Balance>
+                <Balance onChildData={getMyAddress}></Balance>
             </div>
             <div className='send_to'>
                 {showInput && (

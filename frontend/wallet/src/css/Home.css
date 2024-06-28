@@ -8,11 +8,16 @@
     /* font-weight: bold;
     color: #fff; */
 }
+.greeting{
+    font-size: 30px;
+    /*color:rgb(255, 255, 255);*/
+}
 
 .home-container .balance{
     width: 100%;
     height: 300px;
     display: flex;
+    padding: 10px;
     justify-content: center;
 }
 
