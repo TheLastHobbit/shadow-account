@@ -7,6 +7,7 @@ import axios from 'axios';
 import {Input,Form} from 'antd';
 import storage from '../util/storageUtils.js';
 import memoryUser from '../util/memoryUtil.js';
+import { encrypt } from '../util/shamir.js';
 
 
 function Register() {
@@ -28,6 +29,15 @@ function Register() {
     return ethers.utils.hexZeroPad(accountGasLimits.toHexString(), 32);
   }
 
+  function toString(privateKeyObj){
+    const privateKeyArray = Object.values(privateKeyObj);
+    const privateKeyHex = privateKeyArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+    console.log("privateKeyHex:", privateKeyHex);
+    const privateKeyString = '0x' + privateKeyHex;
+    console.log("privateKeyString:", privateKeyString);
+    return privateKeyString;
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     // 处理注册逻辑，请求验证码
@@ -44,6 +54,9 @@ function Register() {
     try{
       const wallet = await createWallet();
       console.log("wallet:", wallet.address);
+      const encoder = new TextEncoder();
+      const privateKey = encoder.encode(wallet.privateKey);
+      const result = await encrypt(privateKey, 2, 3);
       const salt = await getSalt(passport);
       const uncodecommitment = await getCommitment(passport);
       const commitment = encodeCommitment(uncodecommitment[0]);
@@ -75,7 +88,7 @@ function Register() {
         nickname: nickname,
         wallet: {
           address: wallet.address,
-          privateKey: wallet.privateKey,
+          privateKey: toString(result[0]),
         },
         walletAddress: [walletAddress],
         guardian:[]
@@ -85,9 +98,11 @@ function Register() {
       if(response.data.code == 0){
         console.log('注册成功,你的钱包地址为',walletAddress);
         memoryUser.user = user;
+        console.log(wallet.privateKey);
+        console.log(toString(result[0]));
         console.log(memoryUser.user);
         storage.saveUser(user);
-        window.location.href = '/login';
+        // window.location.href = '/login';
       }
       
     }catch (error) {
@@ -95,6 +110,8 @@ function Register() {
     } 
     
   };
+
+
   
   return (
     <div className='container'>

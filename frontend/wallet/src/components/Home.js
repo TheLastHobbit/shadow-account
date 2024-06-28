@@ -14,6 +14,12 @@ function Home(){
     const options = ['ETH','BTC','USDT']
     const [coin, setCoin] = useState('');
     const [inputAmount, setInputAmount] = useState('');
+    const [myAddress,setMyAddress] = useState('');
+
+    //回调函数，用于接收myAddress
+    const getMyAddress = (address) => {
+        setMyAddress(address);
+    }
     
 
     const handleSend = () => {
@@ -33,6 +39,7 @@ function Home(){
     }
     const handleConfirm = () => {
         // 处理确认按钮点击事件
+        console.log('my',myAddress);
         console.log('Send', coin, 'to:', inputAccountNumber);
         console.log('Amount:', inputAmount);
         setShowInput(false);
@@ -44,7 +51,7 @@ function Home(){
     return(
         <div className='home-container'>
             <div className='balance'>
-                <Balance></Balance>
+                <Balance onChildData={getMyAddress}></Balance>
             </div>
             <div className='send_to'>
                 {showInput && (

@@ -8,7 +8,7 @@ import storage from '../util/storageUtils.js';
 import memoryWalletAddress from '../util/memoryUtil.js';
 import { encodeCommitment,signUOP, getHash, createAccount, getCommitment, createWallet, getSalt, getWalletAddress, createPackedUserOperation } from '../util/wallet.js';
 
-const Balance = () => {
+const Balance = ({onChildData}) => {
     const rpcUrl = 'https://sepolia.infura.io/v3/dbe77fbac5b8494e8f03b1099638abfd';
     // 获取本地存储中的用户信息
     const user = JSON.parse(localStorage.getItem('user_key'));
@@ -66,6 +66,11 @@ const Balance = () => {
             fetchBalance(selectedAddress);
         }
     }, [selectedAddress]);
+
+    useEffect(()=>{
+        const myAddress = selectedAddress;
+        onChildData(myAddress);
+    },[onChildData])
 
     if (!user) {
         return <div>fail to find user</div>;
