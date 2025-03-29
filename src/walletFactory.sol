@@ -76,14 +76,4 @@ contract WalletFactory {
         return Wallet(payable(address(proxy)));
     }
 
-    // function create(
-    //     address owner,
-    //     uint256 salt
-    // ) external returns (Wallet) {
-    //     console.log("create");
-    //     console.log("owner:", owner);
-    //     console.log("salt:", salt);
-
-    //     return walletImplementation;
-    // }
 }

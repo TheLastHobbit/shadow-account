@@ -49,7 +49,6 @@ function Register() {
     console.log(response);
     console.log('success')
     
-  
   };
   const handleConfirm = async (e) => {
     e.preventDefault();

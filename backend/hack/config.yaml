@@ -2,7 +2,7 @@
 gfcli:
   gen:
     dao:
-      - link: "mysql:root:12345678(127.0.0.1:3306)/aa"
+      - link: "mysql:root:123456(127.0.0.1:3306)/aa"
         tables: "user,shares"
         removePrefix: "gf_"
         descriptionTag: true

@@ -12,7 +12,7 @@ import (
 )
 
 func SetupUserOpRouter(r *gin.Engine, userOpController *controllers.UserOpController) {
-	r.POST("/userOp", userOpController.StoreUserOp)
+    r.POST("/userOp", userOpController.StoreUserOp)
 }
 
 // SetupDepositRouter 初始化存款路由

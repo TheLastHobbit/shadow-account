@@ -31,7 +31,7 @@ func New() service.IEmail {
 
 func (s sEmail) SendEmail(ctx context.Context, in model.EmailSendInput) (err error) {
 	// 设置认证信息。
-	auth := smtp.PlainAuth("", "yzym_143307lingyu@163.com", "QWHZYJRZTCPXYXAC", "smtp.163.com")
+	auth := smtp.PlainAuth("", "18328555534@163.com", "YXaDp64twtQFqmMw", "smtp.163.com")
 
 	// 设置发送的邮件内容。
 	message := []byte("To: " + in.To + "\r\n" +
@@ -40,7 +40,7 @@ func (s sEmail) SendEmail(ctx context.Context, in model.EmailSendInput) (err err
 		in.Body + "\r\n")
 
 	// 发送邮件。
-	err = smtp.SendMail("smtp.163.com:25", auth, "yzym_143307lingyu@163.com", []string{in.To}, message)
+	err = smtp.SendMail("smtp.163.com:25", auth, "18328555534@163.com", []string{in.To}, message)
 	if err != nil {
 		fmt.Println("Error sending email:", err)
 		return
@@ -69,7 +69,7 @@ func (s sEmail) GetEmail(ctx context.Context) (err error) {
 	defer c.Logout()
 
 	// 登录
-	err = c.Login("yzym_143307lingyu@163.com", "QWHZYJRZTCPXYXAC")
+	err = c.Login("18328555534@163.com", "YXaDp64twtQFqmMw")
 	if err != nil {
 		return
 	}
