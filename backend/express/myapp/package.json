@@ -1,0 +1,25 @@
+{
+  "name": "myapp",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "PORT=$npm_config_port node ./bin/www"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
+    "cookie-parser": "~1.4.4",
+    "cors": "^2.8.5",
+    "debug": "~2.6.9",
+    "dotenv": "^16.5.0",
+    "ejs": "~2.6.1",
+    "elliptic": "^6.5.4",
+    "ethers": "^5.7.2",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "imap": "^0.8.19",
+    "mailparser": "^3.7.2",
+    "morgan": "~1.9.1",
+    "pg": "^8.15.6",
+    "postgres": "^3.4.5"
+  }
+}

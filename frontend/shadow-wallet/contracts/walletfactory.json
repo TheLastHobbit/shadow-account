@@ -1,0 +1,9 @@
+[
+  "constructor(address entryPoint, address _dkim)",
+  "function create(address owner, uint256 salt) returns (address)",
+  "function createAccount(address owner, uint256 salt, bytes commitment) returns (address)",
+  "function dkim() view returns (address)",
+  "function getAddress(address owner, uint256 salt, bytes commitment) view returns (address)",
+  "function walletImplementation() view returns (address)"
+]
+

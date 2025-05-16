@@ -1,0 +1,5 @@
+[
+  "function generateCommitments(uint256[] values) view returns (tuple(string m, uint256 r)[])",
+  "function verify(uint256[] values, tuple(string m, uint256 r)[] commitments) view returns (bool)"
+]
+

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math/big"
 	"net/http"
 	"os"
@@ -50,6 +51,7 @@ func (ctrl *UserOpController) StoreUserOp(c *gin.Context) {
 	// 获取并打印原始请求体
 	rawData, err := c.GetRawData()
 	if err != nil {
+		log.Println("Failed to read request body:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to read request body"})
 		return
 	}
@@ -57,6 +59,7 @@ func (ctrl *UserOpController) StoreUserOp(c *gin.Context) {
 
 	// 绑定 JSON
 	if err := json.Unmarshal(rawData, &request); err != nil {
+		log.Println("Failed to parse JSON:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid request body: %v", err)})
 		return
 	}
@@ -65,6 +68,7 @@ func (ctrl *UserOpController) StoreUserOp(c *gin.Context) {
 
 	// 验证 Nonce
 	if userOp.Nonce == nil {
+		log.Println("Nonce is required or failed to parse")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "nonce is required or failed to parse"})
 		return
 	}
@@ -72,6 +76,7 @@ func (ctrl *UserOpController) StoreUserOp(c *gin.Context) {
 
 	// 验证 PreVerificationGas
 	if userOp.PreVerificationGas == nil {
+		log.Println("PreVerificationGas is required or failed to parse")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "preVerificationGas is required or failed to parse"})
 		return
 	}
@@ -80,36 +85,42 @@ func (ctrl *UserOpController) StoreUserOp(c *gin.Context) {
 	// 验证并解码字段
 	initCode, err := hexStringToBytes(userOp.InitCode)
 	if err != nil {
+		log.Println("Invalid initCode:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid initCode: %v", err)})
 		return
 	}
 
 	callData, err := hexStringToBytes(userOp.CallData)
 	if err != nil {
+		log.Println("Invalid callData:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid callData: %v", err)})
 		return
 	}
 
 	accountGasLimits, err := hexStringToBytes(userOp.AccountGasLimits)
 	if err != nil {
+		log.Println("Invalid accountGasLimits:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid accountGasLimits: %v", err)})
 		return
 	}
 
 	gasFees, err := hexStringToBytes(userOp.GasFees)
 	if err != nil {
+		log.Println("Invalid gasFees:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid gasFees: %v", err)})
 		return
 	}
 
 	paymasterAndData, err := hexStringToBytes(userOp.PaymasterAndData)
 	if err != nil {
+		log.Println("Invalid paymasterAndData:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid paymasterAndData: %v", err)})
 		return
 	}
 
 	signature, err := hexStringToBytes(userOp.Signature)
 	if err != nil {
+		log.Println("Invalid signature:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid signature: %v", err)})
 		return
 	}
@@ -117,6 +128,7 @@ func (ctrl *UserOpController) StoreUserOp(c *gin.Context) {
 	// 处理并发送 UserOp
 	txHash, err := ctrl.processAndSendUserOp(userOp, initCode, callData, accountGasLimits, gasFees, paymasterAndData, signature)
 	if err != nil {
+		log.Println("Failed to process and send UserOp:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -218,26 +230,45 @@ func (ctrl *UserOpController) processAndSendUserOp(userOp models.PackedUserOpera
 	}
 	fmt.Println("Gas price retrieved:", gasPrice.String())
 
-	value := big.NewInt(0)
-	gasLimit := uint64(10000000)
-	toAddress := common.HexToAddress(entryPointAddress)
-	tx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, data)
-
 	chainID, err := ctrl.Client.NetworkID(context.Background())
 	if err != nil {
 		return "", fmt.Errorf("error getting network ID: %v", err)
 	}
 	fmt.Println("Chain ID retrieved:", chainID.String())
 
+	// 验证 Paymaster 余额
+	paymasterAddress := common.HexToAddress("0x5B348AFbaC7ac1696D0ec658ccFA6a05C576e364")
+	balance, err := ctrl.Client.BalanceAt(context.Background(), paymasterAddress, nil)
+	if err != nil {
+		log.Println("Failed to retrieve Paymaster balance:", err)
+		return "", fmt.Errorf("failed to retrieve Paymaster balance: %v", err)
+	}
+	// 假设每个 UserOp 需要 10,000,000 Gas，计算预付款
+	requiredPrefund := big.NewInt(20000000).Mul(big.NewInt(20000000), gasPrice)
+	if balance.Cmp(requiredPrefund) < 0 {
+		log.Println("Paymaster balance insufficient:", balance, "required:", requiredPrefund)
+		return "", fmt.Errorf("Paymaster balance insufficient: current=%s, required=%s", balance.String(), requiredPrefund.String())
+	}
+	fmt.Println("Paymaster balance sufficient:", balance.String())
+
+	// 构造交易
+	value := big.NewInt(0)
+	gasLimit := uint64(20000000) // 增加 Gas 限制
+	toAddress := common.HexToAddress(entryPointAddress)
+	tx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, data)
+
 	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKeyECDSA)
 	if err != nil {
+		log.Println("Failed to sign transaction:", err)
 		return "", fmt.Errorf("error signing transaction: %v", err)
 	}
 	fmt.Println("Transaction signed successfully")
 
+	// 发送交易
 	err = ctrl.Client.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		return "", fmt.Errorf("error sending transaction: %v", err)
+		log.Println("Failed to send transaction:", err)
+		return "", fmt.Errorf("failed to send transaction: %v", err)
 	}
 
 	fmt.Printf("Transaction sent with hash: %s\n", signedTx.Hash().Hex())

@@ -37,7 +37,5 @@ contract SimplePaymaster is Base {
     ) internal override {
         console.log("Paymaster: PostOp called, mode =", uint256(mode));
         console.log("Paymaster: Actual gas cost =", actualGasCost);
-        // 本例中无需额外操作
-        // 如果需要，可以在这里添加日志或退款逻辑
     }
 }
