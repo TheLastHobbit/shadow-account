@@ -113,38 +113,38 @@ router.get('/public-keys', async (req, res) => {
 
 router.post('/generateRingSignature', async (req, res) => {
   try {
-    const { sk, pk, message, ring, walletAddress, nonce } = req.body;
+    const { sk, message, ring, walletAddress, nonce } = req.body;
+    console.log("sk:",sk);
 
     // 验证输入格式
-    if (!pk) {
-      throw new Error('Public key is undefined or null');
+    if (!sk || !ethers.utils.isHexString(sk) || sk.length !== 66) {
+      throw new Error('无效的私钥格式');
     }
-    if (!ethers.utils.isHexString(pk)) {
-      throw new Error(`Invalid public key: not a valid hex string: ${pk}`);
+    if (!message || !ethers.utils.isHexString(message)) {
+      throw new Error('无效的消息格式');
+    }
+    if (!ring || !Array.isArray(ring) || ring.length < 4 || ring.length % 2 !== 0) {
+      throw new Error('无效的环成员数组');
     }
 
-    let uncompressedPk = pk; // 假设输入已经是 0x + 128 hex chars (64 bytes)
-    if (pk.length === 68 && (pk.startsWith("0x02") || pk.startsWith("0x03"))) {
-      const key = secp256k1.keyFromPublic(pk.slice(2), 'hex');
-      const uncompressedPoint = key.getPublic();
-      const xHex = uncompressedPoint.getX().toString('hex');
-      const yHex = uncompressedPoint.getY().toString('hex');
-      uncompressedPk = `0x${ethers.utils.hexZeroPad("0x" + xHex, 32).slice(2)}${ethers.utils.hexZeroPad("0x" + yHex, 32).slice(2)}`;
-      console.log("Converted compressed pk to uncompressed:", uncompressedPk);
-    }
+    // 根据 sk 计算 pk
+    const calculatedPkFromSk_point = secp256k1.g.mul(BigInt(sk));
+    const calculatedPkFromSk_x = calculatedPkFromSk_point.getX().toString('hex');
+    const calculatedPkFromSk_y = calculatedPkFromSk_point.getY().toString('hex');
+    const uncompressedPk = `0x${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_x, 32).slice(2)}${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_y, 32).slice(2)}`;
+    console.log("Calculated uncompressed pk:", uncompressedPk);
 
     const n = ring.length / 2;
-    if (n < 2) throw new Error('Ring too small');
+    if (n < 2) throw new Error('环成员数量过少');
 
+    // 在 ring 中检测 pk
     let pkFound = false;
-    let s = -1; // Signer's index
-    uncompressedPk = '0x' + uncompressedPk.slice(2);
+    let s = -1; // 签名者索引
     for (let i = 0; i < n; i++) {
       const currentRingPkX = ring[i * 2];
       const currentRingPkY = ring[i * 2 + 1];
       const ringMemberPk = `0x${currentRingPkX.slice(2)}${currentRingPkY.slice(2)}`;
       console.log("ringMemberPk:", ringMemberPk);
-      console.log("uncompressedPk:", uncompressedPk);
       if (ringMemberPk === uncompressedPk) {
         pkFound = true;
         s = i;
@@ -152,27 +152,13 @@ router.post('/generateRingSignature', async (req, res) => {
       }
     }
 
-    if (!pkFound) throw new Error('Signer public key not found in the ring');
-
-    const calculatedPkFromSk_point = secp256k1.g.mul(BigInt(sk));
-    const calculatedPkFromSk_x = calculatedPkFromSk_point.getX().toString('hex');
-    const calculatedPkFromSk_y = calculatedPkFromSk_point.getY().toString('hex');
-    const pkToCompareWithSk = `0x${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_x, 32).slice(2)}${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_y, 32).slice(2)}`;
-
-    if (pkToCompareWithSk !== uncompressedPk) {
-      console.error("CRITICAL: Input sk does not correspond to the public key found in the ring!");
-      console.error("PK from ring (uncompressedPk):", uncompressedPk);
-      console.error("PK calculated from sk:", pkToCompareWithSk);
-      throw new Error('Private key does not match the public key in the ring.');
-    } else {
-      console.log("SK and PK match verification passed.");
-    }
+    if (!pkFound) throw new Error('签名者公钥未在环中找到');
 
     // Key Images
     const y_0 = H2(uncompressedPk, message).mul(BigInt(sk));
+    console.log("walletAddress:",walletAddress)
     const initMessage = ethers.utils.keccak256(ethers.utils.concat([
-      ethers.utils.hexlify(walletAddress),
-      ethers.utils.hexlify(nonce)
+      ethers.utils.hexlify(walletAddress)
     ]));
     const initKeyImage = H2(uncompressedPk, initMessage).mul(BigInt(sk));
 
@@ -186,15 +172,14 @@ router.post('/generateRingSignature', async (req, res) => {
 
     // 计算 z[i] = G * r[i] (i ≠ s) 和 z[s] = G * u
     const initial_Gu = secp256k1.g.mul(u);
-    z_final_points[s] = initial_Gu; // 确保 z[s] 始终是 G * u
+    z_final_points[s] = initial_Gu;
     z_final_encoded[s] = `0x${z_final_points[s].encode('hex', true)}`;
 
     for (let i = (s + 1) % n; i !== s; i = (i + 1) % n) {
       r_final[i] = BigInt(ethers.utils.hexlify(ethers.utils.randomBytes(32))) % q;
       const ringMemberPkHex = `${ring[i * 2].slice(2)}${ring[i * 2 + 1].slice(2)}`;
       const temp = '04' + ringMemberPkHex;
-      console.log("333333333333333:");
-      console.log(`ringPk[${i}]:`, temp);
+      console.log("ringPk:", temp);
       z_final_points[i] = secp256k1.g.mul(r_final[i]);
       z_final_encoded[i] = `0x${z_final_points[i].encode('hex', true)}`;
     }
@@ -203,8 +188,6 @@ router.post('/generateRingSignature', async (req, res) => {
     let current_L_for_hash = z_final_points[s];
     for (let k = 0; k < n; k++) {
       const i = (s + 1 + k) % n;
-      console.log("iiiiiiiiii:", i);
-
       c_final[i] = BigInt(ethers.utils.keccak256(ethers.utils.concat([
         ethers.utils.arrayify(message),
         ethers.utils.arrayify(`0x${current_L_for_hash.encode('hex', true)}`),
@@ -216,7 +199,6 @@ router.post('/generateRingSignature', async (req, res) => {
         if (r_final[s] < 0n) {
           r_final[s] += q;
         }
-        // 不再重新计算 z_final_points[s]，保持其为 G * u
       } else {
         const ringMemberPkHex = `${ring[i * 2].slice(2)}${ring[i * 2 + 1].slice(2)}`;
         const temp = '04' + ringMemberPkHex;
@@ -225,7 +207,6 @@ router.post('/generateRingSignature', async (req, res) => {
       }
       current_L_for_hash = z_final_points[i];
     }
-    console.log("3333333333");
 
     // 验证哈希链闭合
     let temp_L_for_hash_check = z_final_points[s];
@@ -238,16 +219,15 @@ router.post('/generateRingSignature', async (req, res) => {
       ]))) % q;
 
       if (calculated_c !== c_final[i]) {
-        console.error(`Internal Check: Hash mismatch at index ${i}`, {
+        console.error(`内部校验失败: c[${i}] 不匹配`, {
           expected_c: c_final[i].toString(16),
           recalculated_c: calculated_c.toString(16),
-          L_used_for_recalc: `0x${temp_L_for_hash_check.encode('hex', true)}`
         });
-        throw new Error(`Internal signature consistency check failed at c[${i}]`);
+        throw new Error(`内部签名一致性校验失败 at c[${i}]`);
       }
       temp_L_for_hash_check = secp256k1.keyFromPublic(z_final_encoded[i].slice(2), 'hex').getPublic();
     }
-    console.log("Internal signature consistency check passed.");
+    console.log("内部签名一致性校验通过");
 
     const zString = z_final_encoded.map(item => item.slice(2)).join('');
 
@@ -258,9 +238,8 @@ router.post('/generateRingSignature', async (req, res) => {
       keyImage: `0x${y_0.encode('hex', true).slice(2)}`,
       initKeyImage: `0x${initKeyImage.encode('hex', true).slice(2)}`,
     });
-
   } catch (error) {
-    console.error('Signature generation error:', error.message, error.stack);
+    console.error('签名生成错误:', error.message, error.stack);
     res.status(500).json({ error: error.message });
   }
 });

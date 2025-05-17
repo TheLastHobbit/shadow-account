@@ -106,76 +106,63 @@ export function WalletView({ isShadowMode, onSendTransaction, walletService }: W
         </CardContent>
       </Card>
 
-      <Card className={isShadowMode ? "bg-slate-800 border-purple-600" : "bg-gray-800 border-cyan-600"}>
-        <CardHeader>
-          <CardTitle className={isShadowMode ? "text-purple-300" : "text-cyan-300"}>Send Transaction</CardTitle>
-          <CardDescription>
-            {isShadowMode ? (
-              <div className="flex items-center text-purple-400 mt-1">
-                <Shield className="h-4 w-4 mr-1" />
-                <span>PRIVACY PROTECTED WITH RING SIGNATURES</span>
-              </div>
-            ) : (
-              <span className="text-cyan-400">SEND ETH TO ANY ADDRESS</span>
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="recipient" className={isShadowMode ? "text-purple-300" : "text-cyan-300"}>
-              Recipient Address
-            </Label>
-            <Input
-              id="recipient"
-              placeholder="0x..."
-              value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
-              className={
-                isShadowMode
-                  ? "bg-slate-900 border-purple-700 text-purple-200"
-                  : "bg-gray-900 border-cyan-700 text-cyan-200"
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="amount" className={isShadowMode ? "text-purple-300" : "text-cyan-300"}>
-              Amount (ETH)
-            </Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.001"
-              placeholder="0.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className={
-                isShadowMode
-                  ? "bg-slate-900 border-purple-700 text-purple-200"
-                  : "bg-gray-900 border-cyan-700 text-cyan-200"
-              }
-            />
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button
-            onClick={handleSend}
-            disabled={isLoading || !recipient || !amount || isLoadingWallet}
-            className={`w-full ${isShadowMode ? "bg-purple-700 hover:bg-purple-600 border border-purple-500" : "bg-cyan-700 hover:bg-cyan-600 border border-cyan-500"}`}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                PROCESSING...
-              </>
-            ) : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                EXECUTE TRANSFER
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
+      {!isShadowMode && (
+  <Card className="bg-gray-800 border-cyan-600">
+    <CardHeader>
+      <CardTitle className="text-cyan-300">Send Transaction</CardTitle>
+      <CardDescription>
+        <span className="text-cyan-400">SEND ETH TO ANY ADDRESS</span>
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="recipient" className="text-cyan-300">
+          Recipient Address
+        </Label>
+        <Input
+          id="recipient"
+          placeholder="0x..."
+          value={recipient}
+          onChange={(e) => setRecipient(e.target.value)}
+          className="bg-gray-900 border-cyan-700 text-cyan-200"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="amount" className="text-cyan-300">
+          Amount (ETH)
+        </Label>
+        <Input
+          id="amount"
+          type="number"
+          step="0.001"
+          placeholder="0.00"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="bg-gray-900 border-cyan-700 text-cyan-200"
+        />
+      </div>
+    </CardContent>
+    <CardFooter>
+      <Button
+        onClick={handleSend}
+        disabled={isLoading || !recipient || !amount || isLoadingWallet}
+        className="w-full bg-cyan-700 hover:bg-cyan-600 border border-cyan-500"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            PROCESSING...
+          </>
+        ) : (
+          <>
+            <Send className="mr-2 h-4 w-4" />
+            EXECUTE TRANSFER
+          </>
+        )}
+      </Button>
+    </CardFooter>
+  </Card>
+)}
     </div>
   )
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -13,8 +14,10 @@ import { ethers } from "ethers";
 import { H2 } from '../../lib/crypto';
 const { ec: EC } = require('elliptic');
 const secp256k1 = new EC('secp256k1');
+import { useWallet } from '../../contexts/WalletContext';
+import { Provider } from "@radix-ui/react-toast";
 
-// 钱包类型定义
+// Wallet type definitions
 interface Wallet {
   id: string;
   address: string;
@@ -44,59 +47,97 @@ interface ShadowAccountModuleProps {
 }
 
 export function ShadowAccountModule({ rootAddress, walletService, onSendTransaction }: ShadowAccountModuleProps) {
-  // 影子模式状态
+  const { userEmail,provider} = useWallet();
+  // Shadow mode state
   const [isShadowMode, setIsShadowMode] = useState(false);
+  const [showRootAccountPrompt, setShowRootAccountPrompt] = useState(false);
 
-  // 钱包状态
+  // Wallet state
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
+  const [availableWallets, setAvailableWallets] = useState<{ address: string; ringMembers: string[] }[]>([]);
 
-  // 交易状态
+
+  // Transaction state
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
   const [isTransacting, setIsTransacting] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  // 流程步骤状态
+  const [rootPrivateKey, setRootPrivateKey] = useState<string | null>(null);
+const [showPrivateKeyPrompt, setShowPrivateKeyPrompt] = useState(false);
+const [showInputPrivateKeyPrompt, setShowInputPrivateKeyPrompt] = useState(false);
+const [inputPrivateKey, setInputPrivateKey] = useState("");
+
+  // Process step state
   const [currentStep, setCurrentStep] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [subStepProgress, setSubStepProgress] = useState<{ [key: number]: number }>({ 0: 0, 1: 0 });
 
-  // 错误和成功消息状态
+  // Error and success message state
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // 调试日志状态
+  // Debug log state
   const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
 
-  // 流程步骤
-  const steps = ["启用影子模式", "创建钱包", "准备交易"];
+  // Process steps with sub-steps
+  const steps = [
+    { name: "创建根账户", subSteps: ["初始化根钱包", "保存根账户"] },
+    { name: "创建影子账户", subSteps: ["生成环签名", "部署影子账户"] },
+    { name: "开始交易", subSteps: [] },
+  ];
 
-  // 添加调试日志
+  // Add debug log
   const addDebugLog = (message: string, data: any = {}) => {
     setDebugLogs((prev) => [{ timestamp: Date.now(), message: `${message} ${JSON.stringify(data)}` }, ...prev.slice(0, 9)]);
     console.log(`[DEBUG] ${message}`, data);
   };
 
-  // 切换影子模式
+  // Toggle shadow mode
   const toggleShadowMode = async () => {
     try {
       setIsProcessing(true);
       setError(null);
       addDebugLog("切换影子模式开始");
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setIsShadowMode(!isShadowMode);
-
       if (!isShadowMode) {
-        setSuccess("影子模式已激活。支持隐私交易。");
-        setCurrentStep(1);
-        addDebugLog("影子模式激活，进入步骤 1");
+        if (!userEmail) {
+          setError("用户邮箱未设置");
+          addDebugLog("切换影子模式失败: 无邮箱");
+          return;
+        }
+        const response = await fetch("http://localhost:3001/wallet/get-shadow-wallets-by-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: userEmail }),
+        });
+        if (!response.ok) {
+          setError("获取影子钱包失败");
+          addDebugLog("获取影子钱包失败", { status: response.status });
+          return;
+        }
+        const { wallets } = await response.json();
+        setAvailableWallets(wallets || []);
+        setIsShadowMode(true);
+        setSuccess("影子模式已激活");
+        if (!wallets || wallets.length === 0) {
+          setShowRootAccountPrompt(true);
+          setCurrentStep(0);
+        } else {
+          setCurrentStep(2);
+        }
+        addDebugLog("影子模式激活", { wallets });
       } else {
-        setSuccess("影子模式已停用。返回标准模式。");
+        setIsShadowMode(false);
+        setSuccess("影子模式已停用");
         setCurrentStep(0);
         setWallets([]);
+        setAvailableWallets([]);
         setSelectedWallet(null);
-        addDebugLog("影子模式停用，重置钱包状态");
+        setShowRootAccountPrompt(false);
+        setSubStepProgress({ 0: 0, 1: 0 });
+        addDebugLog("影子模式停用");
       }
     } catch (err) {
       setError(`切换影子模式失败: ${err.message}`);
@@ -106,136 +147,127 @@ export function ShadowAccountModule({ rootAddress, walletService, onSendTransact
     }
   };
 
-  // 创建普通 Wallet
-  const createStandardWallet = async () => {
+  // Create root wallet
+  const createRootWallet = async () => {
     try {
       setIsProcessing(true);
       setError(null);
-      addDebugLog("创建普通 Wallet 开始");
+      addDebugLog("创建根账户开始");
 
-      const salt = Math.floor(Date.now() / 1000);
-      const result = await walletService.createWallet(rootAddress, salt);
-      const walletAddress = result.walletAddress;
+      setSubStepProgress(prev => ({ ...prev, 0: 1 })); // 初始化根钱包
+      const walletInfo = await walletService.createNewRootWallet(provider);
+      if (!walletInfo || !ethers.utils.isAddress(walletInfo.address)) {
+        throw new Error("创建根账户失败: 无效地址");
+      }
+      addDebugLog("根钱包创建完成", walletInfo );
 
-      const newWallet: Wallet = {
-        id: `wallet-${Date.now()}`,
-        address: walletAddress,
-        type: "standard",
-        createdAt: Date.now(),
-      };
+      setSubStepProgress(prev => ({ ...prev, 0: 2 })); // 保存根账户
 
-      setWallets((prev) => [...prev, newWallet]);
-      setSelectedWallet(newWallet.id);
-      setSuccess(`普通 Wallet 创建成功: ${walletAddress.substring(0, 6)}...${walletAddress.substring(38)}`);
-      setCurrentStep(2);
-      addDebugLog(`普通 Wallet 创建成功: ${walletAddress}`);
+      setRootPrivateKey(walletInfo.privateKey); // 保存私钥
+      setShowPrivateKeyPrompt(true); // 显示私钥弹窗
+
+      setSuccess("根账户创建成功");
+      setCurrentStep(1);
+      setShowRootAccountPrompt(false);
     } catch (err) {
-      setError(`创建普通 Wallet 失败: ${err.message}`);
-      addDebugLog(`创建普通 Wallet 失败: ${err.message}`);
+      setError(`创建根账户失败: ${err.message}`);
+      addDebugLog(`创建根账户失败: ${err.message}`);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // 创建 ShadowWallet
-const createShadowWallet = async () => {
-  try {
-    setIsProcessing(true);
-    setError(null);
-    addDebugLog("创建 ShadowWallet 开始");
 
-    if (!rootAddress) {
-      throw new Error("rootAddress 未定义");
-    }
-    addDebugLog("rootAddress:", rootAddress);
-
-    const salt = Math.floor(Date.now() / 1000);
-    addDebugLog("salt:", salt);
-    
-
-    const walletInfo = await walletService.getWalletInfo();
-
-    let privateKey = walletInfo.wallet.privateKey;
-    const tempPublicKey = secp256k1.g.mul(BigInt(privateKey))
-    console.log("tempPublicKey:",tempPublicKey);
-    const calculatedPkFromSk_x = tempPublicKey.getX().toString('hex');
-    const calculatedPkFromSk_y = tempPublicKey.getY().toString('hex');
-
-    const pkToCompareWithSk = `0x${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_x, 32).slice(2)}${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_y, 32).slice(2)}`;
-
-    walletInfo.wallet.publicKey = pkToCompareWithSk;
-
-    addDebugLog("publicKey:", tempPublicKey);
-    // const calculatedPkFromSk_x = tempPublicKey.getX().toString('hex');
-    // const calculatedPkFromSk_y = tempPublicKey.getY().toString('hex');
-    console.log("calculatedPkFromSk_x:",calculatedPkFromSk_x)
-    console.log("calculatedPkFromSk_y:",calculatedPkFromSk_y)
-
-    const ringInput = {
-      x: '0x'+calculatedPkFromSk_x,
-      y:'0x'+calculatedPkFromSk_y
-    };
-    addDebugLog("ringInput:", ringInput);
-
-    const ring = await walletService.constructRing(ringInput, 10);
-    if (!Array.isArray(ring) || ring.length === 0) {
-      throw new Error("constructRing 返回无效的 ring");
-    }
-    ring.forEach((item, i) => {
-      if (!item.startsWith("0x") || !ethers.utils.isHexString(item)) {
-        throw new Error(`ring 元素 ${i} 无效: ${item}`);
+  const createShadowWallet = async () => {
+    setShowInputPrivateKeyPrompt(true); // 显示输入私钥弹窗
+  };
+  
+  const handlePrivateKeySubmit = async () => {
+    try {
+      setIsProcessing(true);
+      setError(null);
+      addDebugLog("创建影子账户开始");
+  
+      if (!rootAddress) throw new Error("rootAddress 未定义");
+      if (!ethers.utils.isHexString(inputPrivateKey) || inputPrivateKey.length !== 66) {
+        throw new Error("无效的私钥格式");
       }
-    });
-    addDebugLog("ring:", ring);
-
-    const ringId = ethers.utils.keccak256(ethers.utils.concat(ring));
-    if (!ringId.startsWith("0x") || !ethers.utils.isHexString(ringId)) {
-      throw new Error(`无效的 ringId: ${ringId}`);
+      addDebugLog("rootAddress:", rootAddress);
+  
+      const salt = Math.floor(Date.now() / 1000);
+      addDebugLog("salt:", salt);
+  
+      setSubStepProgress(prev => ({ ...prev, 1: 1 })); // 生成环签名
+      const tempPublicKey = secp256k1.g.mul(BigInt(inputPrivateKey));
+      const calculatedPkFromSk_x = tempPublicKey.getX().toString("hex");
+      const calculatedPkFromSk_y = tempPublicKey.getY().toString("hex");
+      const pkToCompareWithSk = `0x${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_x, 32).slice(2)}${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_y, 32).slice(2)}`;
+      addDebugLog("publicKey:", pkToCompareWithSk);
+  
+      const ringInput = { x: "0x" + calculatedPkFromSk_x, y: "0x" + calculatedPkFromSk_y };
+      addDebugLog("ringInput:", ringInput);
+  
+      const ring = await walletService.constructRing(ringInput, 10);
+      if (!Array.isArray(ring) || ring.length === 0) throw new Error("constructRing 返回无效的 ring");
+      ring.forEach((item, i) => {
+        if (!item.startsWith("0x") || !ethers.utils.isHexString(item)) {
+          throw new Error(`ring 元素 ${i} 无效: ${item}`);
+        }
+      });
+      addDebugLog("ring:", ring);
+  
+      const ringId = ethers.utils.keccak256(ethers.utils.concat(ring));
+      if (!ringId.startsWith("0x") || !ethers.utils.isHexString(ringId)) throw new Error(`无效的 ringId: ${ringId}`);
+      addDebugLog("ringId:", ringId);
+  
+      setSubStepProgress(prev => ({ ...prev, 1: 2 })); // 部署影子账户
+      const shadowWalletAddress = await walletService.getShadowWalletAddress(salt);
+      if (!shadowWalletAddress || !ethers.utils.isAddress(shadowWalletAddress)) {
+        throw new Error(`无效的 shadowWalletAddress: ${shadowWalletAddress}`);
+      }
+      addDebugLog("shadowWalletAddress:", shadowWalletAddress);
+  
+      const result = await walletService.createShadowAA(salt, ring, ringId, shadowWalletAddress,pkToCompareWithSk,inputPrivateKey);
+      const walletAddress = result.shadowWalletAddress;
+      if (!ethers.utils.isAddress(walletAddress)) throw new Error(`无效的 shadowWalletAddress: ${walletAddress}`);
+      addDebugLog("createShadowAA 结果:", result);
+  
+      const saveResponse = await fetch("http://localhost:3001/wallet/save-shadow-wallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: userEmail,
+          walletAddress,
+          ringMembers: ring,
+        }),
+      });
+      if (!saveResponse.ok) throw new Error("保存影子钱包失败");
+  
+      const newWallet: Wallet = {
+        id: `shadow-${Date.now()}`,
+        address: walletAddress,
+        type: "shadow",
+        createdAt: Date.now(),
+      };
+  
+      setWallets((prev) => [...prev, newWallet]);
+      setSelectedWallet(newWallet.id);
+      setAvailableWallets((prev) => [...prev, { address: walletAddress, ringMembers: ring }]);
+      setSuccess(`影子账户创建成功: ${walletAddress.substring(0, 6)}...${walletAddress.substring(38)}`);
+      setCurrentStep(2);
+      setShowInputPrivateKeyPrompt(false);
+      setInputPrivateKey("");
+      addDebugLog(`影子账户创建成功: ${walletAddress}`);
+    } catch (err) {
+      const errorMessage = `创建影子账户失败: ${err.message}`;
+      setError(errorMessage);
+      addDebugLog(errorMessage, err);
+    } finally {
+      setIsProcessing(false);
     }
-    addDebugLog("ringId:", ringId);
+  };
 
-    const nonce = 1;
-    const shadowWalletAddress = await walletService.getShadowWalletAddress(salt);
-    if (!shadowWalletAddress || !ethers.utils.isAddress(shadowWalletAddress)) {
-      throw new Error(`无效的 shadowWalletAddress: ${shadowWalletAddress}`);
-    }
-    addDebugLog("shadowWalletAddress:", shadowWalletAddress);
-
-    const result = await walletService.createShadowAA(
-      salt,
-      ring,
-      ringId,
-      shadowWalletAddress
-    );
-    const walletAddress = result.shadowWalletAddress;
-    if (!ethers.utils.isAddress(walletAddress)) {
-      throw new Error(`无效的 shadowWalletAddress: ${walletAddress}`);
-    }
-    addDebugLog("createShadowAA 结果:", result);
-
-    const newWallet: Wallet = {
-      id: `shadow-${Date.now()}`,
-      address: walletAddress,
-      type: "shadow",
-      createdAt: Date.now(),
-    };
-
-    setWallets((prev) => [...prev, newWallet]);
-    setSelectedWallet(newWallet.id);
-    setSuccess(`ShadowWallet 创建成功: ${walletAddress.substring(0, 6)}...${walletAddress.substring(38)}`);
-    setCurrentStep(2);
-    addDebugLog(`ShadowWallet 创建成功: ${walletAddress}`);
-  } catch (err) {
-    const errorMessage = `创建 ShadowWallet 失败: ${err.message}`;
-    setError(errorMessage);
-    addDebugLog(errorMessage, err);
-    throw err;
-  } finally {
-    setIsProcessing(false);
-  }
-};
-
-  // 发送交易
+  // Send transaction
   const sendTransaction = async () => {
     if (!selectedWallet || !recipient || !amount) {
       setError("请填写所有交易详情");
@@ -254,10 +286,15 @@ const createShadowWallet = async () => {
       }
 
       const txData = {
+        from:wallet.address,
+        sk:inputPrivateKey,
+        pk:wallet,
         to: recipient,
         value: amount,
-        useShadowAccount: wallet.type === "shadow"
+        useShadowAccount: wallet.type === "shadow",
       };
+
+      console.log("txData:",txData)
 
       const pendingTx: Transaction = {
         hash: "0x" + Math.random().toString(16).substring(2, 42),
@@ -291,7 +328,7 @@ const createShadowWallet = async () => {
     }
   };
 
-  // 5秒后清除通知
+  // Clear notifications after 5 seconds
   useEffect(() => {
     if (error || success) {
       const timer = setTimeout(() => {
@@ -304,7 +341,7 @@ const createShadowWallet = async () => {
 
   return (
     <div className="space-y-6">
-      {/* 流程步骤 */}
+      {/* Process Steps */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <h3 className={`text-lg font-medium ${isShadowMode ? "text-purple-300" : "text-cyan-300"}`}>钱包设置</h3>
@@ -314,7 +351,7 @@ const createShadowWallet = async () => {
               isShadowMode ? "bg-purple-900/50 text-purple-200 border-purple-600" : "bg-cyan-900/50 text-cyan-200"
             }
           >
-            {currentStep === 0 ? "未开始" : currentStep === 2 ? "完成" : `步骤 ${currentStep}/2`}
+            {currentStep === 0 ? "未开始" : currentStep === 2 ? "完成" : `步骤 ${currentStep + 1}/3`}
           </Badge>
         </div>
 
@@ -338,12 +375,8 @@ const createShadowWallet = async () => {
                 >
                   {index < currentStep ? (
                     <Check className="h-4 w-4" />
-                  ) : index === currentStep ? (
-                    isProcessing ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <span>{index + 1}</span>
-                    )
+                  ) : index === currentStep && isProcessing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <span>{index + 1}</span>
                   )}
@@ -353,15 +386,31 @@ const createShadowWallet = async () => {
                     index <= currentStep ? (isShadowMode ? "text-purple-300" : "text-cyan-300") : "text-gray-500"
                   }`}
                 >
-                  {step}
+                  {step.name}
                 </span>
+                {index === currentStep && step.subSteps.length > 0 && (
+                  <div className="mt-2 text-xs text-purple-400">
+                    {step.subSteps.map((subStep, subIndex) => (
+                      <div key={subIndex} className="flex items-center">
+                        <span
+                          className={`mr-1 ${
+                            subStepProgress[index] > subIndex ? "text-green-400" : "text-purple-400"
+                          }`}
+                        >
+                          {subStepProgress[index] > subIndex ? "✔" : subStepProgress[index] === subIndex ? "⏳" : "○"}
+                        </span>
+                        {subStep}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* 通知 */}
+      {/* Notifications */}
       {error && (
         <Alert variant="destructive" className="bg-red-900/50 border-red-700 text-red-200">
           <AlertTriangle className="h-4 w-4" />
@@ -384,7 +433,7 @@ const createShadowWallet = async () => {
         </Alert>
       )}
 
-      {/* 调试日志 */}
+      {/* Debug Logs */}
       <Card className="bg-slate-800 border-purple-600">
         <CardHeader>
           <CardTitle className="text-purple-300 flex items-center">
@@ -411,7 +460,7 @@ const createShadowWallet = async () => {
         </CardContent>
       </Card>
 
-      {/* 影子模式切换 */}
+      {/* Shadow Mode Toggle */}
       <Card className={`border ${isShadowMode ? "border-purple-600 bg-slate-800" : "border-cyan-600 bg-gray-800"}`}>
         <CardHeader className="pb-2">
           <CardTitle className={isShadowMode ? "text-purple-300" : "text-cyan-300"}>钱包模式</CardTitle>
@@ -448,6 +497,103 @@ const createShadowWallet = async () => {
 
       {isShadowMode && (
         <>
+    <Dialog open={showRootAccountPrompt} onOpenChange={setShowRootAccountPrompt}>
+      <DialogContent className="bg-slate-800 border-purple-600 text-purple-200">
+        <DialogHeader>
+          <DialogTitle className="text-purple-300">创建根账户</DialogTitle>
+          <DialogDescription className="text-purple-400">
+            未检测到影子钱包地址。请先创建根账户以继续。
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end space-x-2">
+          <Button
+            variant="outline"
+            className="border-purple-500 text-purple-200 hover:bg-purple-700"
+            onClick={() => setShowRootAccountPrompt(false)}
+          >
+            取消
+          </Button>
+          <Button
+            className="bg-purple-700 hover:bg-purple-600"
+            onClick={() => {
+              setShowRootAccountPrompt(false);
+              createRootWallet();
+            }}
+          >
+            创建根账户
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    <Dialog open={showPrivateKeyPrompt} onOpenChange={() => {
+      setShowPrivateKeyPrompt(false);
+      setRootPrivateKey(null); // Clear private key after closing
+    }}>
+      <DialogContent className="bg-slate-800 border-purple-600 text-purple-200">
+        <DialogHeader>
+          <DialogTitle className="text-purple-300">保存您的私钥</DialogTitle>
+          <DialogDescription className="text-purple-400">
+            这是您的根账户私钥，仅显示一次！请妥善保存，切勿泄露。
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <Input
+            value={rootPrivateKey || ""}
+            readOnly
+            className="bg-slate-900 border-purple-700 text-purple-200 font-mono"
+          />
+          <p className="text-red-400 text-sm">警告：丢失私钥将无法恢复账户！</p>
+        </div>
+        <div className="flex justify-end">
+          <Button
+            className="bg-purple-700 hover:bg-purple-600"
+            onClick={() => {
+              setShowPrivateKeyPrompt(false);
+              setRootPrivateKey(null);
+            }}
+          >
+            我已保存
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    <Dialog open={showInputPrivateKeyPrompt} onOpenChange={setShowInputPrivateKeyPrompt}>
+      <DialogContent className="bg-slate-800 border-purple-600 text-purple-200">
+        <DialogHeader>
+          <DialogTitle className="text-purple-300">输入私钥</DialogTitle>
+          <DialogDescription className="text-purple-400">
+            请输入您的根账户私钥以创建影子账户。
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <Input
+            value={inputPrivateKey}
+            onChange={(e) => setInputPrivateKey(e.target.value)}
+            placeholder="0x..."
+            className="bg-slate-900 border-purple-700 text-purple-200 font-mono"
+          />
+        </div>
+        <div className="flex justify-end space-x-2">
+          <Button
+            variant="outline"
+            className="border-purple-500 text-purple-200 hover:bg-purple-700"
+            onClick={() => {
+              setShowInputPrivateKeyPrompt(false);
+              setInputPrivateKey("");
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            className="bg-purple-700 hover:bg-purple-600"
+            onClick={handlePrivateKeySubmit}
+            disabled={!inputPrivateKey}
+          >
+            提交
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
           <Tabs defaultValue="setup" className="w-full">
             <TabsList className={`grid grid-cols-3 mb-4 bg-slate-800`}>
               <TabsTrigger value="setup" className="data-[state=active]:bg-purple-700 data-[state=active]:text-white">
@@ -464,62 +610,41 @@ const createShadowWallet = async () => {
             <TabsContent value="setup">
               <div className="space-y-6">
                 <Card className="bg-slate-800 border-purple-600">
-                  <CardHeader className="pb-2">
+                  <CardHeader>
                     <CardTitle className="text-purple-300 flex items-center">
                       <Wallet className="h-5 w-5 mr-2" />
                       钱包管理
                     </CardTitle>
-                    <CardDescription className="text-purple-400">创建和管理您的标准或影子钱包</CardDescription>
+                    <CardDescription className="text-purple-400">选择或创建影子钱包</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {wallets.length > 0 ? (
-                      <div className="space-y-2">
-                        <Label className="text-purple-300">您的钱包</Label>
-                        <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                          {wallets.map((wallet) => (
-                            <div
-                              key={wallet.id}
-                              className={`p-2 rounded border ${
-                                selectedWallet === wallet.id
-                                  ? "bg-purple-900/70 border-purple-500"
-                                  : "bg-slate-900 border-purple-800"
-                              } cursor-pointer`}
-                              onClick={() => setSelectedWallet(wallet.id)}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="font-mono text-sm text-purple-300 truncate">
-                                  {wallet.address.substring(0, 6)}...{wallet.address.substring(38)}
-                                </div>
-                                <Badge
-                                  variant="default"
-                                  className={wallet.type === "shadow" ? "bg-purple-800 text-purple-200" : "bg-blue-800 text-blue-200"}
-                                >
-                                  {wallet.type === "shadow" ? "影子钱包" : "标准钱包"}
-                                </Badge>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
+                    <div className="space-y-2">
+                      <Label className="text-purple-300">选择现有钱包</Label>
+                      <select
+                        className="w-full bg-slate-900 border-purple-700 text-purple-200 p-2 rounded"
+                        value={selectedWallet || ""}
+                        onChange={(e) => {
+                          const wallet = availableWallets.find(w => w.address === e.target.value);
+                          if (wallet) {
+                            setSelectedWallet(wallet.address);
+                            setWallets([{ id: wallet.address, address: wallet.address, type: "shadow", createdAt: Date.now() }]);
+                            setCurrentStep(2);
+                          }
+                        }}
+                      >
+                        <option value="">选择钱包</option>
+                        {availableWallets.map(wallet => (
+                          <option key={wallet.address} value={wallet.address}>
+                            {wallet.address.substring(0, 6)}...{wallet.address.substring(38)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {availableWallets.length === 0 && (
                       <div className="text-center py-4 border border-dashed border-purple-700 rounded">
-                        <p className="text-purple-400 text-sm">尚未创建钱包</p>
+                        <p className="text-purple-400 text-sm">无现有影子钱包</p>
                       </div>
                     )}
-
-                    <Button
-                      onClick={createStandardWallet}
-                      disabled={isProcessing || currentStep < 1}
-                      className="w-full bg-blue-700 hover:bg-blue-600 border border-blue-500"
-                    >
-                      {isProcessing && currentStep === 1 ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Wallet className="mr-2 h-4 w-4" />
-                      )}
-                      创建标准钱包
-                    </Button>
-
                     <Button
                       onClick={createShadowWallet}
                       disabled={isProcessing || currentStep < 1}
@@ -530,7 +655,7 @@ const createShadowWallet = async () => {
                       ) : (
                         <Wallet className="mr-2 h-4 w-4" />
                       )}
-                      创建影子钱包
+                      创建影子账户
                     </Button>
                   </CardContent>
                 </Card>
@@ -668,8 +793,8 @@ const createShadowWallet = async () => {
                                   {tx.status === "success"
                                     ? "交易成功"
                                     : tx.status === "pending"
-                                      ? "交易处理中"
-                                      : "交易失败"}
+                                    ? "交易处理中"
+                                    : "交易失败"}
                                 </span>
                               </div>
                               <div className="mt-1 text-xs text-purple-300 font-mono">

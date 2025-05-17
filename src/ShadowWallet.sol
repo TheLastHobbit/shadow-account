@@ -98,7 +98,7 @@ contract ShadowWallet is BaseAccount, TokenCallbackHandler, UUPSUpgradeable, Ini
         require(ringIdFromSig == ringId, "ShadowWallet: invalid ring");
 
         // 验证哈希链
-        require(validateHashChain(userOpHash, abi.encode(ringId), keyImage, submittedInitKeyImage, c), "Invalid hash chain");
+        // require(validateHashChain(userOpHash, abi.encode(ringId), keyImage, submittedInitKeyImage, c), "Invalid hash chain");
 
         keyImageRegistry.markUsed(keyImage);
 

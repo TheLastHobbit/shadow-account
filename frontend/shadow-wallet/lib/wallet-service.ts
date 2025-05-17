@@ -18,9 +18,10 @@ import ENTRYPOINT_ABI from "../contracts/entrypoint.json";
 import ZKTool_ABI from "../contracts/zkTool.json";
 
 // 常量
-const rpcUrl = "https://sepolia.infura.io/v3/dbe77fbac5b8494e8f03b1099638abfd";
+// const rpcUrl = "https://sepolia.infura.io/v3/dbe77fbac5b8494e8f03b1099638abfd";
+const rpcUrl = "https://sepolia.infura.io/v3/7cbaf46a5d5e4e7e9d4bcaf436516aa2";
 const WALLET_FACTORY_ADDRESS = "0xB71aa8d44E43D8a28E64fcBd6b651e0dbc0bdb4E";
-const SHADOW_WALLET_FACTORY_ADDRESS = "0xA28395e7e606e1870D8bb625cBA25c278F8f758f";
+const SHADOW_WALLET_FACTORY_ADDRESS = "0x9a4Ad15d7803F68ff8B92a7D73116998625965A7";
 const ENTRYPOINT_ADDRESS = "0x1A5C9969F47Ef041c3A359ae4ae9fd9E70eA5653";
 const ZKTOOL_ADDRESS = "0xCBa2Be4eCEa8c15F6FC4fd31C5fa85Bf0377291e";
 const API_BASE_URL = "http://127.0.0.1:8000";
@@ -51,58 +52,58 @@ const convertBigIntToString = (obj: any): any => {
 };
 
 // 创建新钱包
-// export const createNewWallet = async (provider: ethers.providers.JsonRpcProvider): Promise<{ address: string, privateKey: string, publicKey: string }> => {
-//   try {
-//     console.log("もの 创建新钱包...");
-//     console.log("もの Ethers.js version:", ethers.version); // 验证版本
+export const createNewRootWallet = async (provider: ethers.providers.JsonRpcProvider): Promise<{ address: string, privateKey: string, publicKey: string }> => {
+  try {
+    console.log("もの 创建新钱包...");
+    console.log("もの Ethers.js version:", ethers.version); // 验证版本
 
-//     // 生成随机私钥
-//     const privateKey = ethers.utils.hexlify(ethers.utils.randomBytes(32)); // 32字节私钥
-//     if (!ethers.utils.isHexString(privateKey) || privateKey.length !== 66) {
-//       throw new Error(`もの 无效的私钥: ${privateKey}, length: ${privateKey.length}`);
-//     }
-//     console.log("もの 私钥:", privateKey);
+    // 生成随机私钥
+    const privateKey = ethers.utils.hexlify(ethers.utils.randomBytes(32)); // 32字节私钥
+    if (!ethers.utils.isHexString(privateKey) || privateKey.length !== 66) {
+      throw new Error(`もの 无效的私钥: ${privateKey}, length: ${privateKey.length}`);
+    }
+    console.log("もの 私钥:", privateKey);
 
-//     const tempPublicKey = secp256k1.g.mul(BigInt(privateKey));
-//     console.log("tempPublicKey:", tempPublicKey);
-//     const calculatedPkFromSk_x = tempPublicKey.getX().toString('hex');
-//     const calculatedPkFromSk_y = tempPublicKey.getY().toString('hex');
-//     // 构建未压缩公钥（去掉 04 前缀）
-//     const uncompressedPk = `${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_x, 32).slice(2)}${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_y, 32).slice(2)}`;
+    const tempPublicKey = secp256k1.g.mul(BigInt(privateKey));
+    console.log("tempPublicKey:", tempPublicKey);
+    const calculatedPkFromSk_x = tempPublicKey.getX().toString('hex');
+    const calculatedPkFromSk_y = tempPublicKey.getY().toString('hex');
+    // 构建未压缩公钥（去掉 04 前缀）
+    const uncompressedPk = `${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_x, 32).slice(2)}${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_y, 32).slice(2)}`;
 
-//     // 计算 Keccak256 哈希
-//     const publicKeyBytes = ethers.utils.arrayify(`0x${uncompressedPk}`);
-//     const hash = ethers.utils.keccak256(publicKeyBytes);
+    // 计算 Keccak256 哈希
+    const publicKeyBytes = ethers.utils.arrayify(`0x${uncompressedPk}`);
+    const hash = ethers.utils.keccak256(publicKeyBytes);
 
-//     // 取哈希的后 20 字节，添加 0x 前缀
-//     const address = `0x${hash.slice(-40)}`;
-//     console.log("もの elliptic 原始公钥:", uncompressedPk, "length:", uncompressedPk.length);
-//     console.log("address:", address);
+    // 取哈希的后 20 字节，添加 0x 前缀
+    const address = `0x${hash.slice(-40)}`;
+    console.log("もの elliptic 原始公钥:", uncompressedPk, "length:", uncompressedPk.length);
+    console.log("address:", address);
 
-//     if (!ethers.utils.isAddress(address)) {
-//       throw new Error(`もの 无效的地址: ${address}`);
-//     }
-//     console.log("address success");
+    if (!ethers.utils.isAddress(address)) {
+      throw new Error(`もの 无效的地址: ${address}`);
+    }
+    console.log("address success");
 
-//     // 创建钱包以支持签名
-//     if (!provider) throw new Error("もの 提供者未初始化");
-//     const wallet = new ethers.Wallet(privateKey);
-//     const connectedWallet = wallet.connect(provider);
+    // 创建钱包以支持签名
+    if (!provider) throw new Error("もの 提供者未初始化");
+    const wallet = new ethers.Wallet(privateKey);
+    const connectedWallet = wallet.connect(provider);
 
-//     console.log("もの 私钥:", privateKey, "length:", privateKey.length);
+    console.log("もの 私钥:", privateKey, "length:", privateKey.length);
 
-//     // 返回自定义钱包对象
-//     return {
-//       address,
-//       privateKey,
-//       publicKey: uncompressedPk,
-//       signTransaction: connectedWallet.signTransaction.bind(connectedWallet),
-//       signMessage: connectedWallet.signMessage.bind(connectedWallet),
-//     };
-//   } catch (error) {
-//     throw logError(error, "createNewWallet");
-//   }
-// };
+    // 返回自定义钱包对象
+    return {
+      address,
+      privateKey,
+      publicKey: uncompressedPk,
+      signTransaction: connectedWallet.signTransaction.bind(connectedWallet),
+      signMessage: connectedWallet.signMessage.bind(connectedWallet),
+    };
+  } catch (error) {
+    throw logError(error, "createNewWallet");
+  }
+};
 
 // 获取公钥池（链下，从后端接口）
 const getPublicKeyPool = async (): Promise<{ x: string, y: string }[]> => {
@@ -234,7 +235,7 @@ const getShadowWalletAddress = async (
   try {
     const effectiveProvider = provider || new ethers.providers.JsonRpcProvider("https://sepolia.infura.io/v3/dbe77fbac5b8494e8f03b1099638abfd");
     const factory = new ethers.Contract(SHADOW_WALLET_FACTORY_ADDRESS, SHADOW_WALLET_FACTORY_ABI, effectiveProvider);
-    const walletAddress = await factory.getAddress(salt); // 移除 owner 参数
+    const walletAddress = await factory.getAddress(salt); 
     return walletAddress;
   } catch (error) {
     throw logError(error, "getShadowWalletAddress");
@@ -256,15 +257,15 @@ const signUOP = async (wallet: ethers.Wallet, uopHash: string): Promise<string> 
 };
 
 // 获取 ETH 余额
-const getETHBalance = async (walletAddress: string, provider: ethers.providers.JsonRpcProvider): Promise<string> => {
-  try {
-    if (!provider) throw new Error("提供者未初始化");
-    const balanceWei = await provider.getBalance(walletAddress);
-    return ethers.utils.formatEther(balanceWei);
-  } catch (error) {
-    throw logError(error, "getETHBalance");
-  }
-};
+// const getETHBalance = async (walletAddress: string, provider: ethers.providers.JsonRpcProvider): Promise<string> => {
+//   try {
+//     if (!provider) throw new Error("提供者未初始化");
+//     const balanceWei = await provider.getBalance(walletAddress);
+//     return ethers.utils.formatEther(balanceWei);
+//   } catch (error) {
+//     throw logError(error, "getETHBalance");
+//   }
+// };
 
 // 获取盐值（基于邮箱）
 const getSalt = async (email: string): Promise<ethers.BigNumber> => {
@@ -515,8 +516,8 @@ export function useWalletService() {
       console.log("钱包地址保存到 Supabase 成功", { email, walletAddress: actualWalletAddr });
   
       setWalletAddress(actualWalletAddr);
-      const newBalance = await getETHBalance(actualWalletAddr, provider);
-      setBalance(newBalance);
+      // const newBalance = await getETHBalance(actualWalletAddr, provider);
+      // setBalance(newBalance);
   
       return {
         walletAddress: actualWalletAddr,
@@ -528,24 +529,21 @@ export function useWalletService() {
     }
   };
 
-  const createShadowAA = async (salt, ring, ringId, shadowWalletAddress) => {
+  const createShadowAA = async (salt, ring, ringId, shadowWalletAddress,publicKey,privateKey) => {
     if (!wallet || !provider) throw new Error("钱包或提供者未初始化");
+    console.log("publicKey,privateKey:",publicKey,privateKey)
   
     try {
       const nonce = 1;
   
       const initMessage = ethers.utils.keccak256(ethers.utils.concat([
-        ethers.utils.hexlify(shadowWalletAddress),
-        ethers.utils.hexZeroPad(ethers.utils.hexlify(nonce), 32)
+        ethers.utils.hexlify(shadowWalletAddress)
       ]));
-      console.log(" H2(wallet.publicKey:",wallet.publicKey);
-      const initKeyImageRaw = H2(wallet.publicKey, initMessage).mul(BigInt(wallet.privateKey)).encode('hex', true);
+      console.log(" H2(wallet.publicKey:",publicKey);
+      const initKeyImageRaw = H2(publicKey, initMessage).mul(BigInt(privateKey)).encode('hex', true);
       const initKeyImage = initKeyImageRaw.startsWith("0x") ? initKeyImageRaw : `0x${initKeyImageRaw}`;
       const initCode = await encodeShadowWalletInitCode(ring, initKeyImage.slice(4), salt, provider);
       console.log("initCode 生成", { initCode });
-  
-      const shadowAAAddress = await getShadowWalletAddress(salt, provider);
-      console.log("预测影子 AA 地址", { shadowAAAddress });
   
       const accountGasLimits = encodeGas(1000000, 2000000);
       const gasFees = encodeGas(1000000, 2000000);
@@ -561,7 +559,7 @@ export function useWalletService() {
   
       const abiCoder = new ethers.utils.AbiCoder();
       const userOp = await createPackedUserOperation(
-        shadowAAAddress,
+        shadowWalletAddress,
         initCode,
         "0x",
         accountGasLimits,
@@ -580,11 +578,10 @@ export function useWalletService() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sk: wallet.privateKey,
-          pk: wallet.publicKey,
+          sk: privateKey,
           message: userOpHash,
           ring,
-          walletAddress: shadowAAAddress,
+          walletAddress: shadowWalletAddress,
           nonce
         })
       });
@@ -626,18 +623,6 @@ export function useWalletService() {
       const temp3 = "0x" + initKeyImage.slice(4);
       console.log("temp:", temp);
       console.log("temp3:", temp3);
-  
-      let s = -1;
-      const temp2 = wallet.publicKey;
-      console.log("temp2:", temp2);
-      for (let i = 0; i < ring.length; i += 2) {
-        const ringPk = `0x${ring[i].slice(2)}${ring[i + 1].slice(2)}`;
-        if (ringPk === temp2) {
-          s = i / 2;
-          break;
-        }
-      }
-      if (s === -1) throw new Error("Public key not found in ring");
   
       const computedRingId = ethers.utils.keccak256(ethers.utils.concat(ring));
       if (ringId !== computedRingId) {
@@ -703,7 +688,7 @@ export function useWalletService() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userOp: serializedUserOp,
-          to: shadowAAAddress,
+          to: shadowWalletAddress,
           value: "0",
           useShadowAccount: true
         })
@@ -716,12 +701,12 @@ export function useWalletService() {
       const bundleData = await response.json();
       console.log("Shadow Bundler 响应", { txHash: bundleData.txHash });
   
-      setShadowWalletAddress(shadowAAAddress);
-      const newBalance = await getETHBalance(shadowAAAddress, provider);
-      setBalance(newBalance);
+      setShadowWalletAddress(shadowWalletAddress);
+      // const newBalance = await getETHBalance(shadowWalletAddress, provider);
+      // setBalance(newBalance);
   
       return {
-        shadowWalletAddress: shadowAAAddress,
+        shadowWalletAddress: shadowWalletAddress,
         txHash: bundleData.txHash || `0x${Math.random().toString(16).substring(2, 42)}`
       };
     } catch (error) {
@@ -760,8 +745,6 @@ const decryptShare = (data: string, key: string): Uint8Array => {
     const decrypted = decipher.update(data, "hex", "binary") + decipher.final("binary");
     return Buffer.from(decrypted, "hex");
   };
-
-
 
   const createNewWallet = async (
     provider: ethers.providers.JsonRpcProvider
@@ -941,8 +924,8 @@ const decryptShare = (data: string, key: string): Uint8Array => {
       const bundleData = await response2.json();
       console.log("Bundler 响应", { txHash: bundleData.txHash });
 
-      const newBalance = await getETHBalance(walletAddress, provider);
-      setBalance(newBalance);
+      // const newBalance = await getETHBalance(walletAddress, provider);
+      // setBalance(newBalance);
 
       return { walletAddress };
     } catch (error) {
@@ -982,8 +965,8 @@ const decryptShare = (data: string, key: string): Uint8Array => {
       }
 
       if (user.walletAddress && user.walletAddress[0]) {
-        const balance = await getETHBalance(user.walletAddress[0], provider);
-        setBalance(balance);
+        // const balance = await getETHBalance(user.walletAddress[0], provider);
+        // setBalance(balance);
       }
       const shadowSalt = ethers.utils.keccak256(ethers.utils.concat([ethers.utils.toUtf8Bytes(email), ethers.utils.toUtf8Bytes("shadow")]));
       const commitments = await getCommitment(email, provider);
@@ -1019,8 +1002,8 @@ const decryptShare = (data: string, key: string): Uint8Array => {
       const shadowSalt = ethers.utils.keccak256(ethers.utils.concat([ethers.utils.toUtf8Bytes(email), ethers.utils.toUtf8Bytes("shadow")]));
       const shadowAddress = await getWalletAddress(newWallet.address, shadowSalt, encodedCommitment, provider);
       setShadowWalletAddress(shadowAddress);
-      const balance = await getETHBalance(walletAddress, provider);
-      setBalance(balance);
+      // const balance = await getETHBalance(walletAddress, provider);
+      // setBalance(balance);
       return { walletAddress, shadowAddress };
     } catch (error) {
       throw logError(error, "connectWithEmail");
@@ -1028,14 +1011,18 @@ const decryptShare = (data: string, key: string): Uint8Array => {
   }, [provider, setUserEmail, setWallet, setWalletAddress, setShadowWalletAddress, setBalance]);
 
   const sendTransaction = useCallback(
-    async (txData: { to: string, value: string }, useShadowAccount: boolean) => {
+    async (txData: { from:string,sk:any,pk:any,to: string, value: string }, useShadowAccount: boolean) => {
       if (!wallet || !provider) throw new Error("钱包未连接");
       try {
         console.log("发送交易:", txData);
-        const { to, value } = txData;
+        const { from,sk,to,pk, value } = txData;
         const valueWei = ethers.utils.parseEther(value);
 
-        const walletContract = new ethers.Contract(useShadowAccount ? shadowWalletAddress : walletAddress, SHADOW_WALLET_ABI, provider);
+        const walletContract = new ethers.Contract(
+          useShadowAccount ? from : walletAddress,
+          useShadowAccount ? SHADOW_WALLET_ABI : WALLET_ABI,
+          provider
+        );
         const callData = walletContract.interface.encodeFunctionData("execute", [
           to,
           valueWei,
@@ -1057,7 +1044,7 @@ const decryptShare = (data: string, key: string): Uint8Array => {
         ]));
 
         const userOp = await createPackedUserOperation(
-          useShadowAccount ? shadowWalletAddress : walletAddress,
+          useShadowAccount ? from : walletAddress,
           initCode,
           callData,
           accountGasLimits,
@@ -1074,17 +1061,31 @@ const decryptShare = (data: string, key: string): Uint8Array => {
 
         let signature;
         if (useShadowAccount) {
-          const ring = ringMembers;
+          const responseRing = await fetch("http://localhost:3001/wallet/get-shadow-wallets", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ walletAddress:from   }),
+          });
+          if (!responseRing.ok) {
+            throw new Error("获取环成员失败");
+          }
+          const { wallets } = await responseRing.json();
+          const wallet = wallets.find(w => w.address.toLowerCase() === from.toLowerCase());
+          if (!wallet) {
+            throw new Error("未找到对应影子钱包的环成员");
+          }
+          const ring = wallet.ringMembers;
           const nonce = 1;
+          const temp = '0x2493d85a105968ba323b25a2b8fc0b18e221fb9aee17b6ba448ac19b4dbf75a4'
+          // sk = temp;
           const response1 = await fetch("http://127.0.0.1:3001/wallet/generateRingSignature", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              sk: wallet.privateKey,
-              pk: wallet.publicKey,
+              sk: temp,
               message: userOpHash,
               ring,
-              walletAddress: shadowWalletAddress,
+              walletAddress: from,
               nonce
             })
           });
@@ -1123,18 +1124,27 @@ const decryptShare = (data: string, key: string): Uint8Array => {
             throw new Error(`无效的 submittedInitKeyImage: ${validatedInitKeyImage}`);
           }
 
-          let s = -1;
-          const temp2 = wallet.publicKey;
-          for (let i = 0; i < ring.length; i += 2) {
-            const ringPk = `0x${ring[i].slice(2)}${ring[i + 1].slice(2)}`;
-            if (ringPk === temp2) {
-              s = i / 2;
-              break;
-            }
-          }
-          if (s === -1) throw new Error("Public key not found in ring");
 
           const computedRingId = ethers.utils.keccak256(ethers.utils.concat(ring));
+
+          const initMessage = ethers.utils.keccak256(ethers.utils.concat([
+            ethers.utils.hexlify(from)
+          ]));
+
+          const tempPublicKey = secp256k1.g.mul(BigInt(temp));
+    console.log("tempPublicKey:", tempPublicKey);
+    const calculatedPkFromSk_x = tempPublicKey.getX().toString('hex');
+    const calculatedPkFromSk_y = tempPublicKey.getY().toString('hex');
+    // 构建未压缩公钥（去掉 04 前缀）
+    const uncompressedPk = `${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_x, 32).slice(2)}${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_y, 32).slice(2)}`;
+
+
+          const publicKey ='0x'+uncompressedPk
+          console.log("publicKey:",publicKey);
+
+          const initKeyImageRaw = H2(publicKey, initMessage).mul(BigInt(temp)).encode('hex', true);
+          const initKeyImage = initKeyImageRaw.startsWith("0x") ? initKeyImageRaw : `0x${initKeyImageRaw}`;
+
           const temp3 = "0x" + initKeyImage.slice(4);
 
           const temp4 = `0x${z}`;
@@ -1180,8 +1190,8 @@ const decryptShare = (data: string, key: string): Uint8Array => {
         const data = await response.json();
         console.log("用户操作响应:", data);
         const txHash = data.txHash || "0x" + Math.random().toString(16).substring(2, 42);
-        const newBalance = await getETHBalance(useShadowAccount ? shadowWalletAddress : walletAddress, provider);
-        setBalance(newBalance);
+        // const newBalance = await getETHBalance(useShadowAccount ? shadowWalletAddress : walletAddress, provider);
+        // setBalance(newBalance);
         return txHash;
       } catch (error) {
         throw logError(error, "sendTransaction");
@@ -1193,8 +1203,8 @@ const decryptShare = (data: string, key: string): Uint8Array => {
   const getWalletInfo = useCallback(async () => {
     if (!walletAddress) return { address: "", shadowAddress: "", balance: "0.0", rootAddress: "", wallet: "" };
     try {
-      const balance = await getETHBalance(walletAddress, provider);
-      setBalance(balance);
+      // const balance = await getETHBalance(walletAddress, provider);
+      // setBalance(balance);
       return { address: walletAddress, shadowAddress: shadowWalletAddress, balance, rootAddress: wallet?.address || "", wallet: wallet };
     } catch (error) {
       logError(error, "getWalletInfo");
@@ -1331,7 +1341,7 @@ const decryptShare = (data: string, key: string): Uint8Array => {
   }, [setWallet, setWalletAddress, setShadowWalletAddress, setUserEmail, setRingMembers, setBalance, setIsLoggedIn]);
 
   return {
-
+    createNewRootWallet,
     connectWithEmail,
     getWalletInfo,
     getRootInfo,

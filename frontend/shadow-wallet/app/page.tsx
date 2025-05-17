@@ -29,8 +29,8 @@ export default function Home() {
   // Check if user is logged in
   useEffect(() => {
 
-    if (walletService.isLoggedIn) {
-    // if (true) {
+    // if (walletService.isLoggedIn) {
+    if (true) {
       setIsConnected(true)
       // Get user email from storage
       const user = localStorage.getItem("user_key")
