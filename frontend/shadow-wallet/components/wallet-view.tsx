@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Shield, Send, Loader2 } from "lucide-react"
+import { useWallet } from "../contexts/WalletContext";
 
 interface WalletViewProps {
   isShadowMode: boolean
@@ -21,6 +22,7 @@ export function WalletView({ isShadowMode, onSendTransaction, walletService }: W
   const [address, setAddress] = useState("")
   const [shadowAddress, setShadowAddress] = useState("")
   const [isLoadingWallet, setIsLoadingWallet] = useState(true)
+  const { shadowWalletAddress } = useWallet();
 
   useEffect(() => {
     const fetchWalletInfo = async () => {
@@ -29,7 +31,7 @@ export function WalletView({ isShadowMode, onSendTransaction, walletService }: W
         const walletInfo = await walletService.getWalletInfo()
         setBalance(walletInfo.balance || "0.0")
         setAddress(walletInfo.address || "")
-        setShadowAddress(walletInfo.shadowAddress || "")
+        setShadowAddress(shadowWalletAddress || "")
       } catch (error) {
         console.error("Error fetching wallet info:", error)
         // Show error message to user
@@ -58,8 +60,8 @@ export function WalletView({ isShadowMode, onSendTransaction, walletService }: W
       setAmount("")
 
       // Refresh balance after transaction
-      const walletInfo = await walletService.getWalletInfo()
-      setBalance(walletInfo.balance || "0.0")
+      const balance = await walletService.getETHBalance(shadowAddress)
+      setBalance(balance || "0.0")
     } catch (error) {
       console.error("Transaction failed:", error)
       // Show error message to user
@@ -73,51 +75,78 @@ export function WalletView({ isShadowMode, onSendTransaction, walletService }: W
     <div className="space-y-6">
       <Card className={isShadowMode ? "bg-slate-800 border-purple-600" : "bg-gray-800 border-cyan-600"}>
         <CardHeader className="pb-3">
-          <CardTitle className={isShadowMode ? "text-purple-300" : "text-cyan-300"}>Account Details</CardTitle>
+          <CardTitle className={isShadowMode ? "text-purple-300" : "text-cyan-300"}>账户详情</CardTitle>
           <CardDescription className={isShadowMode ? "text-purple-400" : "text-cyan-400"}>
-            {isShadowMode ? "SHADOW ACCOUNT ACTIVE" : "STANDARD ACCOUNT"}
+            {isShadowMode ? "影子账户启动" : "标准账户"}
           </CardDescription>
         </CardHeader>
         <CardContent>
+  {isLoadingWallet ? (
+    <div className="flex justify-center py-4">
+      <Loader2 className={`h-6 w-6 animate-spin ${isShadowMode ? "text-purple-400" : "text-cyan-400"}`} />
+    </div>
+  ) : (
+    <div className="flex justify-between items-center">
+      <div>
+        <p className={`text-sm font-medium ${isShadowMode ? "text-purple-400" : "text-cyan-400"} mb-1`}>
+          地址
+        </p>
+        <p className={`font-mono text-sm ${isShadowMode ? "text-purple-300" : "text-cyan-300"}`}>
+          {isShadowMode ? shadowAddress : address}
+        </p>
+      </div>
+      <div className="text-right flex items-center space-x-2">
+        <div>
+          <p className={`text-sm font-medium ${isShadowMode ? "text-purple-400" : "text-cyan-400"} mb-1`}>
+            余额
+          </p>
+          <p className={`text-2xl font-bold ${isShadowMode ? "text-purple-200" : "text-cyan-200"}`}>
+            {balance} ETH
+          </p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={async () => {
+            setIsLoadingWallet(true);
+            const addressToRefresh = isShadowMode ? shadowAddress : address;
+            try {
+              const balance = await walletService.getETHBalance(addressToRefresh)
+              setBalance(balance || "0.0");
+            } catch (error) {
+              console.error("Error refreshing balance:", error);
+              alert(`Failed to refresh balance: ${error.message}`);
+            } finally {
+              setIsLoadingWallet(false);
+            }
+          }}
+          disabled={isLoadingWallet}
+          className={isShadowMode ? "text-purple-400 hover:text-purple-300" : "text-cyan-400 hover:text-cyan-300"}
+        >
           {isLoadingWallet ? (
-            <div className="flex justify-center py-4">
-              <Loader2 className={`h-6 w-6 animate-spin ${isShadowMode ? "text-purple-400" : "text-cyan-400"}`} />
-            </div>
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <div className="flex justify-between items-center">
-              <div>
-                <p className={`text-sm font-medium ${isShadowMode ? "text-purple-400" : "text-cyan-400"} mb-1`}>
-                  Address
-                </p>
-                <p className={`font-mono text-sm ${isShadowMode ? "text-purple-300" : "text-cyan-300"}`}>
-                  {isShadowMode ? shadowAddress : address}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className={`text-sm font-medium ${isShadowMode ? "text-purple-400" : "text-cyan-400"} mb-1`}>
-                  Balance
-                </p>
-                <p className={`text-2xl font-bold ${isShadowMode ? "text-purple-200" : "text-cyan-200"}`}>
-                  {balance} ETH
-                </p>
-              </div>
-            </div>
+            <Shield className="h-4 w-4" />
           )}
-        </CardContent>
+        </Button>
+      </div>
+    </div>
+  )}
+</CardContent>
       </Card>
 
       {!isShadowMode && (
   <Card className="bg-gray-800 border-cyan-600">
     <CardHeader>
-      <CardTitle className="text-cyan-300">Send Transaction</CardTitle>
+      <CardTitle className="text-cyan-300">发送交易</CardTitle>
       <CardDescription>
-        <span className="text-cyan-400">SEND ETH TO ANY ADDRESS</span>
+        <span className="text-cyan-400">发送ETH给任何地址</span>
       </CardDescription>
     </CardHeader>
     <CardContent className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="recipient" className="text-cyan-300">
-          Recipient Address
+          接受地址
         </Label>
         <Input
           id="recipient"
@@ -129,7 +158,7 @@ export function WalletView({ isShadowMode, onSendTransaction, walletService }: W
       </div>
       <div className="space-y-2">
         <Label htmlFor="amount" className="text-cyan-300">
-          Amount (ETH)
+          金额
         </Label>
         <Input
           id="amount"
@@ -156,7 +185,7 @@ export function WalletView({ isShadowMode, onSendTransaction, walletService }: W
         ) : (
           <>
             <Send className="mr-2 h-4 w-4" />
-            EXECUTE TRANSFER
+            执行交易
           </>
         )}
       </Button>

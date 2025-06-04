@@ -54,7 +54,18 @@ contract ShadowWalletTest is Test {
         address walletAddress = factory.getAddress(salt);
         console.log("Predicted walletAddress:", walletAddress);
 
-        // 5. 构造 UserOperation
+        // 5. 预存 ETH 给 walletAddress
+        // 计算所需的 gas 费用
+        // accountGasLimits: verificationGasLimit = 2000000, callGasLimit = 2000000
+        // preVerificationGas: 50000
+        // gasFees: maxFeePerGas = 2000000 wei
+        uint256 totalGas = 2000000 + 2000000 + 50000; // 总 gas 消耗
+        uint256 maxFeePerGas = 2000000; // maxFeePerGas = 2000000 wei
+        uint256 requiredEth = totalGas * maxFeePerGas;
+        vm.deal(walletAddress, requiredEth);
+        console.log("Pre-funded walletAddress with ETH:", requiredEth);
+
+        // 6. 构造 UserOperation
         PackedUserOperation memory userOp = PackedUserOperation({
             sender: walletAddress,
             nonce: 0,
@@ -67,11 +78,11 @@ contract ShadowWalletTest is Test {
             signature: ""
         });
 
-        // 6. 计算 userOpHash
+        // 7. 计算 userOpHash
         bytes32 userOpHash = entryPoint.getUserOpHash(userOp);
         console.logBytes32(userOpHash);
 
-        // 7. 模拟环签名数据
+        // 8. 模拟环签名数据
         uint256[] memory c = new uint256[](10);
         uint256[] memory r = new uint256[](10);
         for (uint256 i = 0; i < 10; i++) {
@@ -85,7 +96,7 @@ contract ShadowWalletTest is Test {
         bytes32 keyImage = keccak256(abi.encode(userOpHash));
         bytes32 submittedInitKeyImage = initKeyImage; // 保持与 initCode 中一致
 
-        // 8. 设置 userOp.signature
+        // 9. 设置 userOp.signature
         userOp.signature = abi.encode(
             c,
             r,
@@ -95,7 +106,7 @@ contract ShadowWalletTest is Test {
             submittedInitKeyImage
         );
 
-        // 9. 调用 handleOps
+        // 10. 调用 handleOps
         PackedUserOperation[] memory ops = new PackedUserOperation[](1);
         ops[0] = userOp;
         entryPoint.handleOps(ops, payable(beneficiary));

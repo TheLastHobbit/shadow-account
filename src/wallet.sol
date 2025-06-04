@@ -40,6 +40,11 @@ contract Wallet is
 
     event EthTransferred(address indexed to, uint256 amount);
 
+    event OwnerChanged(
+        address indexed oldOwner,
+        address indexed newOwner
+    );
+
     modifier _requireFromEntryPointOrOwner() {
         require(
             msg.sender == address(_entryPoint) || msg.sender == owner(),
@@ -232,7 +237,13 @@ contract Wallet is
             "Wallet Recovery: wrong email address!"
         );
         require(success, "Wallet Recovery: DKIM verify failed.");
-        transferOwnership(newOwner);
+        // 记录旧的 owner
+        address oldOwner = owner();
+        // 转移所有权
+        super._transferOwnership(newOwner);
+        // transferOwnership(newOwner);
+        // 发出 OwnerChanged 事件
+        emit OwnerChanged(oldOwner, newOwner);
         return true;
     }
 

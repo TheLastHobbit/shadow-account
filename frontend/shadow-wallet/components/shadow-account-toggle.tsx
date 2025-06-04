@@ -29,7 +29,7 @@ export function ShadowAccountToggle({ isShadowMode, onToggle, onShowShadowAccoun
                 htmlFor="shadow-mode"
                 className={`font-medium ${isShadowMode ? "text-purple-300" : "text-cyan-300"}`}
               >
-                Shadow Mode
+                影子模式
               </Label>
               <Switch
                 id="shadow-mode"
@@ -44,7 +44,7 @@ export function ShadowAccountToggle({ isShadowMode, onToggle, onShowShadowAccoun
               />
             </div>
             <p className={`text-sm ${isShadowMode ? "text-purple-400" : "text-cyan-400"} mt-1`}>
-              {isShadowMode ? "STEALTH MODE ACTIVE :: RING SIGNATURES ENABLED" : "SWITCH TO ENABLE PRIVACY FEATURES"}
+              {isShadowMode ? "已切换为影子模式" : "切换为隐私模式"}
             </p>
           </div>
         </div>

@@ -9,13 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Shield, Wallet, Send, AlertTriangle, Check, RefreshCw, ScrollText, ArrowRight } from "lucide-react";
+import { Loader2, Shield, Wallet, Send, AlertTriangle, Check, RefreshCw, ScrollText, ArrowRight, Users } from "lucide-react";
 import { ethers } from "ethers";
 import { H2 } from '../../lib/crypto';
 const { ec: EC } = require('elliptic');
 const secp256k1 = new EC('secp256k1');
 import { useWallet } from '../../contexts/WalletContext';
-import { Provider } from "@radix-ui/react-toast";
 
 // Wallet type definitions
 interface Wallet {
@@ -47,7 +46,8 @@ interface ShadowAccountModuleProps {
 }
 
 export function ShadowAccountModule({ rootAddress, walletService, onSendTransaction }: ShadowAccountModuleProps) {
-  const { userEmail,provider} = useWallet();
+  const { userEmail, provider, setShadowWalletAddress } = useWallet();
+  
   // Shadow mode state
   const [isShadowMode, setIsShadowMode] = useState(false);
   const [showRootAccountPrompt, setShowRootAccountPrompt] = useState(false);
@@ -56,7 +56,10 @@ export function ShadowAccountModule({ rootAddress, walletService, onSendTransact
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
   const [availableWallets, setAvailableWallets] = useState<{ address: string; ringMembers: string[] }[]>([]);
-
+  const [balance, setBalance] = useState("0.0");
+  const [address, setAddress] = useState("");
+  const [shadowAddress, setShadowAddress] = useState("");
+  const [isLoadingWallet, setIsLoadingWallet] = useState(true);
 
   // Transaction state
   const [recipient, setRecipient] = useState("");
@@ -64,10 +67,17 @@ export function ShadowAccountModule({ rootAddress, walletService, onSendTransact
   const [isTransacting, setIsTransacting] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
+  // Ring members state
+  const [ringMembers, setRingMembers] = useState<string[]>([]);
+  const [isLoadingRingMembers, setIsLoadingRingMembers] = useState(false);
+
+  // Private key state
   const [rootPrivateKey, setRootPrivateKey] = useState<string | null>(null);
-const [showPrivateKeyPrompt, setShowPrivateKeyPrompt] = useState(false);
-const [showInputPrivateKeyPrompt, setShowInputPrivateKeyPrompt] = useState(false);
-const [inputPrivateKey, setInputPrivateKey] = useState("");
+  const [showPrivateKeyPrompt, setShowPrivateKeyPrompt] = useState(false);
+  const [showInputPrivateKeyPrompt, setShowInputPrivateKeyPrompt] = useState(false);
+  const [inputPrivateKey, setInputPrivateKey] = useState("");
+  const [showTransactionPrivateKeyPrompt, setShowTransactionPrivateKeyPrompt] = useState(false);
+  const [transactionPrivateKey, setTransactionPrivateKey] = useState("");
 
   // Process step state
   const [currentStep, setCurrentStep] = useState(0);
@@ -93,6 +103,65 @@ const [inputPrivateKey, setInputPrivateKey] = useState("");
     setDebugLogs((prev) => [{ timestamp: Date.now(), message: `${message} ${JSON.stringify(data)}` }, ...prev.slice(0, 9)]);
     console.log(`[DEBUG] ${message}`, data);
   };
+
+  // Fetch wallet info (including balance)
+  useEffect(() => {
+    const fetchWalletInfo = async () => {
+      try {
+        setIsLoadingWallet(true);
+        const walletInfo = await walletService.getWalletInfo();
+        setAddress(walletInfo.address || "");
+        setShadowAddress(walletInfo.shadowAddress || "");
+        // 使用 getETHBalance 获取余额
+        const walletAddr = isShadowMode ? walletInfo.shadowAddress : walletInfo.address;
+        if (walletAddr && ethers.utils.isAddress(walletAddr)) {
+          const newBalance = await walletService.getETHBalance(walletAddr, provider);
+          setBalance(newBalance || "0.0");
+        } else {
+          setBalance("0.0");
+        }
+      } catch (error) {
+        console.error("Error fetching wallet info:", error);
+        alert(`Failed to load wallet info: ${error.message}`);
+      } finally {
+        setIsLoadingWallet(false);
+      }
+    };
+
+    if (walletService) {
+      fetchWalletInfo();
+    }
+  }, [walletService, isShadowMode, provider]);
+
+  // Fetch ring members
+  useEffect(() => {
+    const fetchRingMembers = async () => {
+      if (!isShadowMode || !shadowAddress) {
+        console.log("Shadow mode disabled or shadowAddress not available:", {
+          isShadowMode,
+          shadowAddress,
+        });
+        return;
+      }
+
+      try {
+        setIsLoadingRingMembers(true);
+        console.log("Fetching ring members for shadowAddress:", shadowAddress);
+        const members = await walletService.getRingMembers(shadowAddress);
+        console.log("Fetched ring members:", members);
+        setRingMembers(members || []);
+      } catch (error) {
+        console.error("Error fetching ring members:", error);
+        alert(`Failed to load ring members: ${error.message}`);
+      } finally {
+        setIsLoadingRingMembers(false);
+      }
+    };
+
+    if (walletService) {
+      fetchRingMembers();
+    }
+  }, [walletService, isShadowMode, shadowAddress]);
 
   // Toggle shadow mode
   const toggleShadowMode = async () => {
@@ -159,7 +228,7 @@ const [inputPrivateKey, setInputPrivateKey] = useState("");
       if (!walletInfo || !ethers.utils.isAddress(walletInfo.address)) {
         throw new Error("创建根账户失败: 无效地址");
       }
-      addDebugLog("根钱包创建完成", walletInfo );
+      addDebugLog("根钱包创建完成", walletInfo);
 
       setSubStepProgress(prev => ({ ...prev, 0: 2 })); // 保存根账户
 
@@ -177,7 +246,6 @@ const [inputPrivateKey, setInputPrivateKey] = useState("");
     }
   };
 
-
   const createShadowWallet = async () => {
     setShowInputPrivateKeyPrompt(true); // 显示输入私钥弹窗
   };
@@ -187,72 +255,78 @@ const [inputPrivateKey, setInputPrivateKey] = useState("");
       setIsProcessing(true);
       setError(null);
       addDebugLog("创建影子账户开始");
-  
+
       if (!rootAddress) throw new Error("rootAddress 未定义");
       if (!ethers.utils.isHexString(inputPrivateKey) || inputPrivateKey.length !== 66) {
         throw new Error("无效的私钥格式");
       }
       addDebugLog("rootAddress:", rootAddress);
-  
+
       const salt = Math.floor(Date.now() / 1000);
       addDebugLog("salt:", salt);
-  
+
       setSubStepProgress(prev => ({ ...prev, 1: 1 })); // 生成环签名
       const tempPublicKey = secp256k1.g.mul(BigInt(inputPrivateKey));
       const calculatedPkFromSk_x = tempPublicKey.getX().toString("hex");
       const calculatedPkFromSk_y = tempPublicKey.getY().toString("hex");
       const pkToCompareWithSk = `0x${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_x, 32).slice(2)}${ethers.utils.hexZeroPad("0x" + calculatedPkFromSk_y, 32).slice(2)}`;
       addDebugLog("publicKey:", pkToCompareWithSk);
-  
+
       const ringInput = { x: "0x" + calculatedPkFromSk_x, y: "0x" + calculatedPkFromSk_y };
       addDebugLog("ringInput:", ringInput);
-  
+
       const ring = await walletService.constructRing(ringInput, 10);
       if (!Array.isArray(ring) || ring.length === 0) throw new Error("constructRing 返回无效的 ring");
-      ring.forEach((item, i) => {
+      
+      // 修正 ring 元素，确保长度为偶数
+      const formattedRing = ring.map((item, i) => {
         if (!item.startsWith("0x") || !ethers.utils.isHexString(item)) {
           throw new Error(`ring 元素 ${i} 无效: ${item}`);
         }
+        const hex = item.startsWith("0x") ? item.slice(2) : item;
+        // 如果 hex 长度为奇数，补前导 0
+        const paddedHex = hex.length % 2 !== 0 ? `0${hex}` : hex;
+        return `0x${paddedHex}`;
       });
-      addDebugLog("ring:", ring);
-  
-      const ringId = ethers.utils.keccak256(ethers.utils.concat(ring));
+      addDebugLog("formattedRing:", formattedRing);
+
+      const ringId = ethers.utils.keccak256(ethers.utils.concat(formattedRing));
       if (!ringId.startsWith("0x") || !ethers.utils.isHexString(ringId)) throw new Error(`无效的 ringId: ${ringId}`);
       addDebugLog("ringId:", ringId);
-  
+
       setSubStepProgress(prev => ({ ...prev, 1: 2 })); // 部署影子账户
       const shadowWalletAddress = await walletService.getShadowWalletAddress(salt);
       if (!shadowWalletAddress || !ethers.utils.isAddress(shadowWalletAddress)) {
         throw new Error(`无效的 shadowWalletAddress: ${shadowWalletAddress}`);
       }
       addDebugLog("shadowWalletAddress:", shadowWalletAddress);
-  
-      const result = await walletService.createShadowAA(salt, ring, ringId, shadowWalletAddress,pkToCompareWithSk,inputPrivateKey);
+
+      const result = await walletService.createShadowAA(salt, formattedRing, ringId, shadowWalletAddress, pkToCompareWithSk, inputPrivateKey);
       const walletAddress = result.shadowWalletAddress;
       if (!ethers.utils.isAddress(walletAddress)) throw new Error(`无效的 shadowWalletAddress: ${walletAddress}`);
       addDebugLog("createShadowAA 结果:", result);
-  
+
       const saveResponse = await fetch("http://localhost:3001/wallet/save-shadow-wallet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: userEmail,
           walletAddress,
-          ringMembers: ring,
+          ringMembers: formattedRing,
         }),
       });
       if (!saveResponse.ok) throw new Error("保存影子钱包失败");
-  
+
       const newWallet: Wallet = {
         id: `shadow-${Date.now()}`,
         address: walletAddress,
         type: "shadow",
         createdAt: Date.now(),
       };
-  
+
       setWallets((prev) => [...prev, newWallet]);
       setSelectedWallet(newWallet.id);
-      setAvailableWallets((prev) => [...prev, { address: walletAddress, ringMembers: ring }]);
+      setAvailableWallets((prev) => [...prev, { address: walletAddress, ringMembers: formattedRing }]);
       setSuccess(`影子账户创建成功: ${walletAddress.substring(0, 6)}...${walletAddress.substring(38)}`);
       setCurrentStep(2);
       setShowInputPrivateKeyPrompt(false);
@@ -275,9 +349,22 @@ const [inputPrivateKey, setInputPrivateKey] = useState("");
       return;
     }
 
+    // 显示私钥输入弹窗
+    setShowTransactionPrivateKeyPrompt(true);
+  };
+
+  // 处理交易私钥提交并发送交易
+  const handleTransactionPrivateKeySubmit = async () => {
+    if (!ethers.utils.isHexString(transactionPrivateKey) || transactionPrivateKey.length !== 66) {
+      setError("无效的私钥格式");
+      addDebugLog("交易失败：无效的私钥格式");
+      return;
+    }
+
     try {
       setIsTransacting(true);
       setError(null);
+      setShowTransactionPrivateKeyPrompt(false);
       addDebugLog("发送交易开始");
 
       const wallet = wallets.find((w) => w.id === selectedWallet);
@@ -286,15 +373,15 @@ const [inputPrivateKey, setInputPrivateKey] = useState("");
       }
 
       const txData = {
-        from:wallet.address,
-        sk:inputPrivateKey,
-        pk:wallet,
+        from: wallet.address,
+        sk: transactionPrivateKey, // 使用用户输入的私钥
+        pk: wallet,
         to: recipient,
         value: amount,
         useShadowAccount: wallet.type === "shadow",
       };
 
-      console.log("txData:",txData)
+      console.log("txData:", txData);
 
       const pendingTx: Transaction = {
         hash: "0x" + Math.random().toString(16).substring(2, 42),
@@ -317,6 +404,7 @@ const [inputPrivateKey, setInputPrivateKey] = useState("");
       );
       setRecipient("");
       setAmount("");
+      setTransactionPrivateKey(""); // 清空私钥
     } catch (err) {
       setError(`交易失败: ${err.message}`);
       setTransactions((prev) =>
@@ -495,109 +583,221 @@ const [inputPrivateKey, setInputPrivateKey] = useState("");
         </CardContent>
       </Card>
 
+      {/* Account Details with Refresh Balance */}
+      <Card className={isShadowMode ? "bg-slate-800 border-purple-600" : "bg-gray-800 border-cyan-600"}>
+        <CardHeader className="pb-3">
+          <CardTitle className={isShadowMode ? "text-purple-300" : "text-cyan-300"}>账户详情</CardTitle>
+          <CardDescription className={isShadowMode ? "text-purple-400" : "text-cyan-400"}>
+            {isShadowMode ? "影子账户已激活" : "标准账户"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoadingWallet ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className={`h-6 w-6 animate-spin ${isShadowMode ? "text-purple-400" : "text-cyan-400"}`} />
+            </div>
+          ) : (
+            <div className="flex justify-between items-center">
+              <div>
+                <p className={`text-sm font-medium ${isShadowMode ? "text-purple-400" : "text-cyan-400"} mb-1`}>
+                  地址
+                </p>
+                <p className={`font-mono text-sm ${isShadowMode ? "text-purple-300" : "text-cyan-300"}`}>
+                  {isShadowMode ? shadowAddress : address}
+                </p>
+              </div>
+              <div className="text-right flex items-center space-x-2">
+                <div>
+                  <p className={`text-sm font-medium ${isShadowMode ? "text-purple-400" : "text-cyan-400"} mb-1`}>
+                    余额
+                  </p>
+                  <p className={`text-2xl font-bold ${isShadowMode ? "text-purple-200" : "text-cyan-200"}`}>
+                    {balance} ETH
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    setIsLoadingWallet(true);
+                    try {
+                      const walletAddr = isShadowMode ? shadowAddress : address;
+                      if (walletAddr && ethers.utils.isAddress(walletAddr)) {
+                        const newBalance = await walletService.getETHBalance(walletAddr, provider);
+                        setBalance(newBalance || "0.0");
+                      }
+                    } catch (error) {
+                      console.error("Error refreshing balance:", error);
+                      alert(`Failed to refresh balance: ${error.message}`);
+                    } finally {
+                      setIsLoadingWallet(false);
+                    }
+                  }}
+                  disabled={isLoadingWallet}
+                  className={isShadowMode ? "text-purple-400 hover:text-purple-300" : "text-cyan-400 hover:text-cyan-300"}
+                >
+                  {isLoadingWallet ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {isShadowMode && (
         <>
-    <Dialog open={showRootAccountPrompt} onOpenChange={setShowRootAccountPrompt}>
-      <DialogContent className="bg-slate-800 border-purple-600 text-purple-200">
-        <DialogHeader>
-          <DialogTitle className="text-purple-300">创建根账户</DialogTitle>
-          <DialogDescription className="text-purple-400">
-            未检测到影子钱包地址。请先创建根账户以继续。
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex justify-end space-x-2">
-          <Button
-            variant="outline"
-            className="border-purple-500 text-purple-200 hover:bg-purple-700"
-            onClick={() => setShowRootAccountPrompt(false)}
-          >
-            取消
-          </Button>
-          <Button
-            className="bg-purple-700 hover:bg-purple-600"
-            onClick={() => {
-              setShowRootAccountPrompt(false);
-              createRootWallet();
-            }}
-          >
-            创建根账户
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-    <Dialog open={showPrivateKeyPrompt} onOpenChange={() => {
-      setShowPrivateKeyPrompt(false);
-      setRootPrivateKey(null); // Clear private key after closing
-    }}>
-      <DialogContent className="bg-slate-800 border-purple-600 text-purple-200">
-        <DialogHeader>
-          <DialogTitle className="text-purple-300">保存您的私钥</DialogTitle>
-          <DialogDescription className="text-purple-400">
-            这是您的根账户私钥，仅显示一次！请妥善保存，切勿泄露。
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <Input
-            value={rootPrivateKey || ""}
-            readOnly
-            className="bg-slate-900 border-purple-700 text-purple-200 font-mono"
-          />
-          <p className="text-red-400 text-sm">警告：丢失私钥将无法恢复账户！</p>
-        </div>
-        <div className="flex justify-end">
-          <Button
-            className="bg-purple-700 hover:bg-purple-600"
-            onClick={() => {
-              setShowPrivateKeyPrompt(false);
-              setRootPrivateKey(null);
-            }}
-          >
-            我已保存
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-    <Dialog open={showInputPrivateKeyPrompt} onOpenChange={setShowInputPrivateKeyPrompt}>
-      <DialogContent className="bg-slate-800 border-purple-600 text-purple-200">
-        <DialogHeader>
-          <DialogTitle className="text-purple-300">输入私钥</DialogTitle>
-          <DialogDescription className="text-purple-400">
-            请输入您的根账户私钥以创建影子账户。
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <Input
-            value={inputPrivateKey}
-            onChange={(e) => setInputPrivateKey(e.target.value)}
-            placeholder="0x..."
-            className="bg-slate-900 border-purple-700 text-purple-200 font-mono"
-          />
-        </div>
-        <div className="flex justify-end space-x-2">
-          <Button
-            variant="outline"
-            className="border-purple-500 text-purple-200 hover:bg-purple-700"
-            onClick={() => {
-              setShowInputPrivateKeyPrompt(false);
-              setInputPrivateKey("");
-            }}
-          >
-            取消
-          </Button>
-          <Button
-            className="bg-purple-700 hover:bg-purple-600"
-            onClick={handlePrivateKeySubmit}
-            disabled={!inputPrivateKey}
-          >
-            提交
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          <Dialog open={showRootAccountPrompt} onOpenChange={setShowRootAccountPrompt}>
+            <DialogContent className="bg-slate-800 border-purple-600 text-purple-200">
+              <DialogHeader>
+                <DialogTitle className="text-purple-300">创建根账户</DialogTitle>
+                <DialogDescription className="text-purple-400">
+                  未检测到影子钱包地址。请先创建根账户以继续。
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  className="border-purple-500 text-purple-200 hover:bg-purple-700"
+                  onClick={() => setShowRootAccountPrompt(false)}
+                >
+                  取消
+                </Button>
+                <Button
+                  className="bg-purple-700 hover:bg-purple-600"
+                  onClick={() => {
+                    setShowRootAccountPrompt(false);
+                    createRootWallet();
+                  }}
+                >
+                  创建根账户
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showPrivateKeyPrompt} onOpenChange={() => {
+            setShowPrivateKeyPrompt(false);
+            setRootPrivateKey(null); // Clear private key after closing
+          }}>
+            <DialogContent className="bg-slate-800 border-purple-600 text-purple-200">
+              <DialogHeader>
+                <DialogTitle className="text-purple-300">保存您的私钥</DialogTitle>
+                <DialogDescription className="text-purple-400">
+                  这是您的根账户私钥，仅显示一次！请妥善保存，切勿泄露。
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  value={rootPrivateKey || ""}
+                  readOnly
+                  className="bg-slate-900 border-purple-700 text-purple-200 font-mono"
+                />
+                <p className="text-red-400 text-sm">警告：丢失私钥将无法恢复账户！</p>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  className="bg-purple-700 hover:bg-purple-600"
+                  onClick={() => {
+                    setShowPrivateKeyPrompt(false);
+                    setRootPrivateKey(null);
+                  }}
+                >
+                  我已保存
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showInputPrivateKeyPrompt} onOpenChange={setShowInputPrivateKeyPrompt}>
+            <DialogContent className="bg-slate-800 border-purple-600 text-purple-200">
+              <DialogHeader>
+                <DialogTitle className="text-purple-300">输入私钥</DialogTitle>
+                <DialogDescription className="text-purple-400">
+                  请输入您的根账户私钥以创建影子账户。
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  value={inputPrivateKey}
+                  onChange={(e) => setInputPrivateKey(e.target.value)}
+                  placeholder="0x..."
+                  className="bg-slate-900 border-purple-700 text-purple-200 font-mono"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  className="border-purple-500 text-purple-200 hover:bg-purple-700"
+                  onClick={() => {
+                    setShowInputPrivateKeyPrompt(false);
+                    setInputPrivateKey("");
+                  }}
+                >
+                  取消
+                </Button>
+                <Button
+                  className="bg-purple-700 hover:bg-purple-600"
+                  onClick={handlePrivateKeySubmit}
+                  disabled={!inputPrivateKey}
+                >
+                  提交
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showTransactionPrivateKeyPrompt} onOpenChange={() => {
+            setShowTransactionPrivateKeyPrompt(false);
+            setTransactionPrivateKey("");
+          }}>
+            <DialogContent className="bg-slate-800 border-purple-600 text-purple-200">
+              <DialogHeader>
+                <DialogTitle className="text-purple-300">输入私钥</DialogTitle>
+                <DialogDescription className="text-purple-400">
+                  请输入您的私钥以签名交易。
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  value={transactionPrivateKey}
+                  onChange={(e) => setTransactionPrivateKey(e.target.value)}
+                  placeholder="0x..."
+                  className="bg-slate-900 border-purple-700 text-purple-200 font-mono"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  className="border-purple-500 text-purple-200 hover:bg-purple-700"
+                  onClick={() => {
+                    setShowTransactionPrivateKeyPrompt(false);
+                    setTransactionPrivateKey("");
+                  }}
+                >
+                  取消
+                </Button>
+                <Button
+                  className="bg-purple-700 hover:bg-purple-600"
+                  onClick={handleTransactionPrivateKeySubmit}
+                  disabled={!transactionPrivateKey}
+                >
+                  提交
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <Tabs defaultValue="setup" className="w-full">
-            <TabsList className={`grid grid-cols-3 mb-4 bg-slate-800`}>
+            <TabsList className={`grid grid-cols-4 mb-4 bg-slate-800`}>
               <TabsTrigger value="setup" className="data-[state=active]:bg-purple-700 data-[state=active]:text-white">
                 钱包设置
+              </TabsTrigger>
+              <TabsTrigger value="ring-members" className="data-[state=active]:bg-purple-700 data-[state=active]:text-white">
+                环成员
               </TabsTrigger>
               <TabsTrigger value="transactions" className="data-[state=active]:bg-purple-700 data-[state=active]:text-white">
                 交易
@@ -629,6 +829,7 @@ const [inputPrivateKey, setInputPrivateKey] = useState("");
                             setSelectedWallet(wallet.address);
                             setWallets([{ id: wallet.address, address: wallet.address, type: "shadow", createdAt: Date.now() }]);
                             setCurrentStep(2);
+                            setShadowWalletAddress(wallet.address);
                           }
                         }}
                       >
@@ -660,6 +861,52 @@ const [inputPrivateKey, setInputPrivateKey] = useState("");
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            <TabsContent value="ring-members">
+              <Card className="bg-slate-800 border-purple-600">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-purple-300">
+                    <Users className="h-5 w-5 mr-2" />
+                    环签名成员
+                  </CardTitle>
+                  <CardDescription className="text-purple-400">查看您的环成员以增强隐私</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="text-purple-300">当前环成员 ({ringMembers.length})</Label>
+                    {isLoadingRingMembers ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="h-6 w-6 animate-spin text-purple-400" />
+                      </div>
+                    ) : (
+                      <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
+                        {ringMembers.length === 0 ? (
+                          <p className="text-sm text-purple-400 py-2 border border-dashed border-purple-700 rounded p-3 text-center">
+                            尚未添加环成员
+                          </p>
+                        ) : (
+                          ringMembers.map((member, index) => (
+                            <div
+                              key={index}
+                              className="p-2 border rounded-md border-purple-700 bg-slate-900"
+                            >
+                              <span className="font-mono text-sm truncate text-purple-300">
+                                {member.substring(0, 6)}...{member.substring(member.length - 4)}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <div className="text-sm text-purple-400 border-t border-purple-800/50 pt-4 w-full text-center">
+                    建议：至少添加 5 个成员以获得更好的隐私
+                  </div>
+                </CardFooter>
+              </Card>
             </TabsContent>
 
             <TabsContent value="transactions">

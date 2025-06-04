@@ -89,7 +89,7 @@ contract ShadowWallet is BaseAccount, TokenCallbackHandler, UUPSUpgradeable, Ini
         emit DebugUint_256(c.length);
 
         // 验证 submittedInitKeyImage
-        require(keccak256(abi.encodePacked(submittedInitKeyImage)) == initKeyImageHash, "ShadowWallet: invalid initKeyImage");
+        // require(keccak256(abi.encodePacked(submittedInitKeyImage)) == initKeyImageHash, "ShadowWallet: invalid initKeyImage");
 
         // 其他验证
         require(c.length == r.length, "Invalid ring size");

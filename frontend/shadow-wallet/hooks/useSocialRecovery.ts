@@ -4,7 +4,8 @@ import { ethers } from "ethers";
 import { useCallback, useState, useEffect } from "react";
 import { createNewWallet } from "../lib/wallet-service";
 import WALLET_ABI from "../contracts/wallet.json";
-
+import { decryptShare,sendRecoveryUserOp } from "../lib/wallet-service"; // 假设 wallet-service 已导出 decryptShare 和 decrypt
+import { encrypt,decrypt } from "../lib/utils/shamir";
 const rpcUrl = "https://sepolia.infura.io/v3/dbe77fbac5b8494e8f03b1099638abfd";
 const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
 
@@ -63,23 +64,66 @@ const promptSendRecoveryEmail = async (email: string, walletAddress: string, new
   }
 };
 
-// 调用 Wallet.verify 进行恢复
+// 调用 Wallet.verify 进行恢复（新增私钥恢复逻辑）
 const recoverWallet = async (
   walletAddress: string,
   toSign: string,
   body: string,
   sign: string,
   newOwner: string,
-  base64Encoded: boolean
+  base64Encoded: boolean,
+  email: string // 新增 email 参数，用于获取分片
 ) => {
   try {
-    console.log("provider.getSigner():",provider.getSigner())
-    const walletContract = new ethers.Contract(walletAddress, WALLET_ABI, provider.getSigner());
-    console.log("walletContract",walletContract)
-    const tx = await walletContract.verify(toSign, body, sign, newOwner, base64Encoded);
-    const receipt = await tx.wait(); 
-    console.log("Wallet recovery successful:", receipt);
-    return receipt;
+    // 1. 从 localStorage 获取 S3 分片
+    const share3Encrypted = localStorage.getItem(`share_${email}`);
+    if (!share3Encrypted) {
+      throw new Error("未找到 S3 分片（localStorage）");
+    }
+    const share3 = decryptShare(share3Encrypted, email);
+    console.log("S3 分片（解密后）:", Array.from(share3));
+
+    // 2. 从 Supabase Storage 获取 S2 分片
+    const response = await fetch("http://localhost:3001/wallet/get-cloud-share", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        key: ethers.utils.keccak256(ethers.utils.toUtf8Bytes(email)),
+      }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "获取 S2 分片失败");
+    }
+    const { share: share2 } = await response.json();
+    console.log("S2 分片:", share2);
+
+    // 3. 使用 Shamir 秘密共享恢复私钥（S2 和 S3）
+    const rebuiltBytes = decrypt([Buffer.from(share2, "hex"), share3], 2);
+    const privateKey = Buffer.from(rebuiltBytes).toString("hex");
+    console.log("恢复的私钥:", privateKey);
+
+    // 4. 使用恢复的私钥创建钱包实例
+    const wallet = new ethers.Wallet(`0x${privateKey}`, provider);
+    console.log("恢复的用户地址:", wallet.address);
+
+    // 5. 使用恢复的钱包签名交易
+    // const walletContract = new ethers.Contract(walletAddress, WALLET_ABI, wallet);
+    const { txHash } = await sendRecoveryUserOp(
+      walletAddress,
+      toSign,
+      body,
+      sign,
+      newOwner,
+      base64Encoded,
+      wallet,
+      provider
+    );
+
+    console.log("Wallet recovery successful:", { txHash });
+
+    return { txHash };
   } catch (error) {
     throw logError(error, "recoverWallet");
   }
@@ -136,11 +180,12 @@ export function useSocialRecovery(email: string) {
     }
     try {
       const newWallet = await createNewWallet(provider);
-      const newOwner = newWallet.address;
+      const newOwner = newWallet.wallet.address;
+      const privateKey = newWallet.wallet.privateKey;
       console.log("生成的恢复地址 (new owner):", newOwner);
 
       const recoveryEmail = await promptSendRecoveryEmail(email, walletAddress, newOwner);
-      return { recoveryEmail, newOwner };
+      return { recoveryEmail, newOwner, privateKey,walletAddress};
     } catch (error) {
       throw logError(error, "generateRecoveryEmail");
     }
@@ -174,9 +219,8 @@ export function useSocialRecovery(email: string) {
 
         const { toSign, body: parsedBody, sign, base64Encoded } = await response.json();
         console.log("后端解析结果:", { toSign, parsedBody, sign, base64Encoded });
-        console.log("3333333")
 
-        const receipt = await recoverWallet(walletAddress, toSign, parsedBody, sign, newOwner, base64Encoded);
+        const receipt = await recoverWallet(walletAddress, toSign, parsedBody, sign, newOwner, base64Encoded, email);
         return { receipt, newOwner };
       } catch (error) {
         throw logError(error, "completeRecovery");

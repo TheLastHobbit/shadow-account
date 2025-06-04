@@ -58,7 +58,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         <div className="space-y-2">
           <Label htmlFor="email" className="text-cyan-400 flex items-center">
             <Mail className="h-4 w-4 mr-2" />
-            Email (QQ)
+            邮箱 (QQ)
           </Label>
           <div className="relative">
             <Input
@@ -77,7 +77,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         <div className="space-y-2">
           <Label htmlFor="password" className="text-cyan-400 flex items-center">
             <Lock className="h-4 w-4 mr-2" />
-            Password
+            密码
           </Label>
           <Input
             id="password"
@@ -114,7 +114,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
                 AUTHENTICATING...
               </>
             ) : (
-              "ACCESS SYSTEM"
+              "检测系统"
             )}
           </span>
         </Button>
